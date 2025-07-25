@@ -160,32 +160,32 @@
      * Sprite definition layout of the spritesheet.
      * @enum {Object}
      */
-    Runner.spriteDefinition = {
-        LDPI: {
-            CACTUS_LARGE: { x: 332, y: 2 },
-            CACTUS_SMALL: { x: 228, y: 2 },
-            CLOUD: { x: 86, y: 2 },
-            HORIZON: { x: 2, y: 54 },
-            MOON: { x: 484, y: 2 },
-            PTERODACTYL: { x: 134, y: 2 },
-            RESTART: { x: 2, y: 2 },
-            TEXT_SPRITE: { x: 655, y: 2 },
-            TREX: { x: 848, y: 2 },
-            STAR: { x: 645, y: 2 }
-        },
-        HDPI: {
-            CACTUS_LARGE: { x: 652, y: 2 },
-            CACTUS_SMALL: { x: 446, y: 2 },
-            CLOUD: { x: 166, y: 2 },
-            HORIZON: { x: 2, y: 104 },
-            MOON: { x: 954, y: 2 },
-            PTERODACTYL: { x: 260, y: 2 },
-            RESTART: { x: 2, y: 2 },
-            TEXT_SPRITE: { x: 1294, y: 2 },
-            TREX: { x: 1678, y: 2 },
-            STAR: { x: 1276, y: 2 }
-        }
-    };
+Runner.spriteDefinition = {
+    LDPI: {
+        RESTART: { x: 0, y: 0 },
+        TREX: { x: 78, y: 0 },
+        CLOUD: { x: 170, y: 0 },
+        PTERODACTYL: { x: 256, y: 0 },
+        CACTUS_SMALL: { x: 370, y: 0 },
+        CACTUS_LARGE: { x: 416, y: 0 },
+        TEXT_SPRITE: { x: 1170, y: 0 },
+        STAR: { x: 0, y: 0 }, // optional, not included in your sheet
+        HORIZON: { x: 0, y: 88 }, // assuming it starts under the top row
+        MOON: { x: 0, y: 176 }   // placeholder if you need it
+    },
+    HDPI: {
+        RESTART: { x: 0, y: 0 },
+        TREX: { x: 78, y: 0 },
+        CLOUD: { x: 170, y: 0 },
+        PTERODACTYL: { x: 256, y: 0 },
+        CACTUS_SMALL: { x: 370, y: 0 },
+        CACTUS_LARGE: { x: 416, y: 0 },
+        TEXT_SPRITE: { x: 1170, y: 0 },
+        STAR: { x: 0, y: 0 },
+        HORIZON: { x: 0, y: 88 },
+        MOON: { x: 0, y: 176 }
+    }
+};
 
 
     /**
@@ -1559,21 +1559,22 @@
      * T-rex player config.
      * @enum {number}
      */
-    Trex.config = {
-        DROP_VELOCITY: -5,
-        GRAVITY: 0.6,
-        HEIGHT: 47,
-        HEIGHT_DUCK: 25,
-        INIITAL_JUMP_VELOCITY: -10,
-        INTRO_DURATION: 1500,
-        MAX_JUMP_HEIGHT: 30,
-        MIN_JUMP_HEIGHT: 30,
-        SPEED_DROP_COEFFICIENT: 3,
-        SPRITE_WIDTH: 262,
-        START_X_POS: 50,
-        WIDTH: 44,
-        WIDTH_DUCK: 59
-    };
+Trex.config = {
+    DROP_VELOCITY: -5,
+    GRAVITY: 0.6,
+    HEIGHT: 88,
+    HEIGHT_DUCK: 88,
+    INIITAL_JUMP_VELOCITY: -10,
+    INTRO_DURATION: 1500,
+    MAX_JUMP_HEIGHT: 30,
+    MIN_JUMP_HEIGHT: 30,
+    SPEED_DROP_COEFFICIENT: 3,
+    SPRITE_WIDTH: 262,
+    START_X_POS: 50,
+    WIDTH: 78,
+    WIDTH_DUCK: 78
+};
+
 
 
     /**
@@ -1618,28 +1619,29 @@
      * Animation config for different states.
      * @enum {Object}
      */
-    Trex.animFrames = {
-        WAITING: {
-            frames: [44, 0],
-            msPerFrame: 1000 / 3
-        },
-        RUNNING: {
-            frames: [88, 132],
-            msPerFrame: 1000 / 12
-        },
-        CRASHED: {
-            frames: [220],
-            msPerFrame: 1000 / 60
-        },
-        JUMPING: {
-            frames: [0],
-            msPerFrame: 1000 / 60
-        },
-        DUCKING: {
-            frames: [264, 323],
-            msPerFrame: 1000 / 8
-        }
-    };
+Trex.animFrames = {
+    WAITING: {
+        frames: [78], // Use standing frame
+        msPerFrame: 1000 / 3
+    },
+    RUNNING: {
+        frames: [1340 - 78, 1418 - 78], // offsets relative to TREX.x
+        msPerFrame: 1000 / 12
+    },
+    CRASHED: {
+        frames: [1496 - 78],
+        msPerFrame: 1000 / 60
+    },
+    JUMPING: {
+        frames: [78 - 78],
+        msPerFrame: 1000 / 60
+    },
+    DUCKING: {
+        frames: [1574 - 78, 1652 - 78],
+        msPerFrame: 1000 / 8
+    }
+};
+
 
 
     Trex.prototype = {
