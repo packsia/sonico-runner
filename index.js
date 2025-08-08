@@ -272,25 +272,38 @@ class Game {
   
 bindEvents() {
   document.addEventListener('keydown', e => {
-    if (e.code === 'Space') {
-      if (!this.isPlaying) return;       // <-- ignore when not playing
-      this.trex.startJump();
+    if (e.code !== 'Space') return;
+
+    // 1) first time: allow space to start
+    if (!this.isPlaying && !this.hasEverStarted) {
+      this.start();
+      return;
     }
+
+    // 2) after game over: ignore space (must click restart)
+    if (!this.isPlaying && this.hasEverStarted) return;
+
+    // 3) while playing: jump
+    this.trex.startJump();
   });
 
   const mobileBtn = document.getElementById('mobile-btn');
   mobileBtn.addEventListener('click', () => {
-    if (!this.isPlaying) return;         // same rule on mobile
+    if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
+    if (!this.isPlaying) return; // post-collision, ignore
     this.trex.startJump();
   });
 }
 
 
+
 // tiny helpers
 hideGameOver() { this.gameOverEl && this.gameOverEl.classList.add('hidden'); }
 showGameOver() { this.gameOverEl && this.gameOverEl.classList.remove('hidden'); }
+  this.hideGameOver();
   
   start() {
+    this.hideGameOver();
     this.isPlaying = true;
     this.trex.status = 'RUNNING';
     this.lastTime = performance.now();
@@ -306,9 +319,9 @@ showGameOver() { this.gameOverEl && this.gameOverEl.classList.remove('hidden'); 
 
 end() {
   this.isPlaying = false;
-  document.getElementById('mobile-btn').textContent = 'Start';
-  this.showGameOver();   // <-- show only after collision
-
+  this.trex.status = 'IDLE';
+  this.runnerGif?.classList.add('hidden');
+  this.showGameOver();
 }
 
   update(timestamp) {
