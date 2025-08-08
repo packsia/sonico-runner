@@ -71,3 +71,10 @@ html, body {
 
 /* Mobile: hide the spacebar hint */
 @media (max-width: 768px) { #startMsg { display: none; } }
+
+#mobile-btn { display:none; }
+
+@media (max-width: 768px){
+  #mobile-btn { display:block; }
+}
+
