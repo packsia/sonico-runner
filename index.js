@@ -2,8 +2,8 @@
 
 window.onload = function() {
   const canvas = document.getElementById('game');
-  canvas.width  = 700;
-  canvas.height = 400;
+  canvas.width  = 800;
+  canvas.height = 500;
 
   // Match the stage size to the canvas size
   const stage = document.getElementById('stage');
@@ -265,11 +265,10 @@ class Game {
     this.bindEvents();
     this.renderIdleScreen();
 
-    this.obstacleCooldown = 200; // ms until next obstacle can spawn
-
-    
+    this.obstacleCooldown = 200; // ms until next obstacle can spawn  
   }
 
+  
   bindEvents() {
     document.addEventListener('keydown', e => {
       if (e.code === 'Space') {
@@ -288,6 +287,10 @@ class Game {
     });
   }
 
+// tiny helpers
+hideGameOver() { this.gameOverEl && this.gameOverEl.classList.add('hidden'); }
+showGameOver() { this.gameOverEl && this.gameOverEl.classList.remove('hidden'); }
+  
   start() {
     this.isPlaying = true;
     this.trex.status = 'RUNNING';
@@ -297,19 +300,16 @@ class Game {
     this.startMsg && (this.startMsg.style.display = 'none');
     this.hasEverStarted = true;
   }
-
-  // Hide game-over HUD if it was showing
-  this.gameOverEl && this.gameOverEl.classList.add('hidden');
-
+    
+    this.hideGameOver();   // <-- make sure it's hidden on start
   requestAnimationFrame(this.update.bind(this));
 }
 
 end() {
   this.isPlaying = false;
   document.getElementById('mobile-btn').textContent = 'Start';
+  this.showGameOver();   // <-- show only after collision
 
-  // Show Game Over + restart button
-  this.gameOverEl && this.gameOverEl.classList.remove('hidden');
 }
 
   update(timestamp) {
