@@ -56,16 +56,16 @@ const WORLD = {
 const GROUND_LIFT = 0; // tiny gap so sprites sit just above the floor
 
 const TrexConfig = {
-  WIDTH: 78,
-  HEIGHT: 88,
+  WIDTH: 100,
+  HEIGHT: 100,
   X: 50,
-  JUMP_VELOCITY: -13,
-  GRAVITY: 0.4
+  JUMP_VELOCITY: -10,
+  GRAVITY: 0.3
 };
 
 const ObstacleTypes = [
   { images: IMG.martini, width: 30, height: 45 },
-  { images: IMG.palm,   width: 40, height: 56 }
+  { images: IMG.palm,   width: 70, height: 75 }
 ];
 
 /**************
@@ -361,12 +361,12 @@ updateObstacles(delta) {
   const canSpawn =
     Math.random() < 0.02 &&
     (this.obstacles.length === 0 ||
-     this.obstacles[this.obstacles.length - 1].x < this.width - 400); // tweak gap
+     this.obstacles[this.obstacles.length - 1].x < this.width - 200); // tweak gap
 
   if (canSpawn) {
     const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
     // small +5 pushes it down so it sits right on the floor sprite
-    this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 5));
+    this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 4));
   }
 
   // move/draw and check collisions
