@@ -1,23 +1,25 @@
 'use strict';
 
-window.onload = function() {
+/* ======================
+   BOOT
+====================== */
+window.addEventListener('load', () => {
   const canvas = document.getElementById('game');
   canvas.width  = 800;
   canvas.height = 500;
 
-  // Match the stage size to the canvas size
+  // Match the stage size to the canvas size so HUD aligns
   const stage = document.getElementById('stage');
   stage.style.width  = canvas.width + 'px';
   stage.style.height = canvas.height + 'px';
 
   new Game(canvas);
-};
+});
 
 
-
-/**************
- * IMAGE LOADER
- **************/
+/* ======================
+   ASSETS
+====================== */
 function loadImage(src) {
   const img = new Image();
   img.src = src;
@@ -46,41 +48,45 @@ const IMG = {
   restart:  loadImage('assets/sonico-images/restart.png')
 };
 
-/**************
- * CONFIG
- **************/
+
+/* ======================
+   CONFIG
+====================== */
 const WORLD = {
   FLOOR_HEIGHT: 20,
   BOTTOM_PAD: 10
 };
 
-const WORLD_SPEED = 300; // px/sec
+// Scroll speed (pixels / second)
+const WORLD_SPEED = 300;
 
-const GROUND_LIFT = 0; // tiny gap so sprites sit just above the floor
+// tiny gap so sprites sit just above the floor
+const GROUND_LIFT = 0;
 
 const TrexConfig = {
-  WIDTH: 100,
+  WIDTH: 100,           // must be a number (not "auto")
   HEIGHT: 100,
   X: 50,
-  JUMP_VELOCITY: -10,
-  GRAVITY: 0.3
+  JUMP_VELOCITY: -10,   // more negative = higher initial jump
+  GRAVITY: 0.3          // higher = falls faster
 };
 
 const ObstacleTypes = [
   { images: IMG.martini, width: 30, height: 45 },
-  { images: IMG.palm,   width: 70, height: 75 }
+  { images: IMG.palm,    width: 70, height: 75 }
 ];
 
-/**************
- * TREX
- **************/
+
+/* ======================
+   CLASSES
+====================== */
 class Trex {
   constructor(ctx, floorY) {
     this.ctx = ctx;
     this.x = TrexConfig.X;
     this.groundY = floorY - TrexConfig.HEIGHT;
     this.y = this.groundY;
-    this.status = 'IDLE';
+    this.status = 'IDLE';  // IDLE | RUNNING | JUMPING
     this.jumpVel = 0;
   }
   startJump() {
@@ -108,9 +114,6 @@ class Trex {
   }
 }
 
-/**************
- * CLOUD
- **************/
 class Cloud {
   constructor(ctx, canvasWidth) {
     this.ctx = ctx;
@@ -118,48 +121,35 @@ class Cloud {
     const skyTop = 10;
     const skyBottom = Math.max(60, ctx.canvas.height * 0.35);
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
-    this.speed = 1.5 + Math.random();
+    this.speed = 40 + Math.random() * 40;   // px/sec
     this.width = 60;
     this.height = 30;
   }
-  update(delta) {
-    const pxPerMs = this.speed * 0.06;
-    this.x -= pxPerMs * (delta || 16);
-  }
-  draw() {
-    this.ctx.drawImage(IMG.cloud, this.x, this.y, this.width, this.height);
-  }
-  isVisible() {
-    return this.x + this.width > 0;
-  }
+  update(dt) { this.x -= this.speed * dt; }
+  draw() { this.ctx.drawImage(IMG.cloud, this.x, this.y, this.width, this.height); }
+  isVisible() { return this.x + this.width > 0; }
 }
 
-/**************
- * BIRD
- **************/
 class Bird {
   constructor(ctx, canvasWidth) {
     this.ctx = ctx;
     this.x = canvasWidth + Math.random() * 200;
     const skyTop = 20;
-    const skyBottom = Math.max(60, ctx.canvas.height * 0.5); 
+    const skyBottom = Math.max(60, ctx.canvas.height * 0.5);
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
 
-    this.speed = 3 + Math.random() * 1.5; // slightly faster than clouds
-    this.width = 46; 
+    this.speed = 120 + Math.random() * 60; // px/sec
+    this.width = 46;
     this.height = 40;
 
     this.frame = 0;
     this.frameTimer = 0;
     this.frameRate = 6; // flaps per second
   }
-  update(delta) {
-    const pxPerMs = this.speed * 0.06;
-    this.x -= pxPerMs * (delta || 16);
-
-    // animate wings
-    this.frameTimer += delta;
-    if (this.frameTimer >= 1000 / this.frameRate) {
+  update(dt) {
+    this.x -= this.speed * dt;
+    this.frameTimer += dt;
+    if (this.frameTimer >= 1 / this.frameRate) {
       this.frame = (this.frame + 1) % IMG.bird.length;
       this.frameTimer = 0;
     }
@@ -168,17 +158,9 @@ class Bird {
     const img = IMG.bird[this.frame];
     this.ctx.drawImage(img, this.x, this.y, this.width, this.height);
   }
-  isVisible() {
-    return this.x + this.width > 0;
-  }
+  isVisible() { return this.x + this.width > 0; }
 }
 
-
-
-
-/**************
- * OBSTACLE
- **************/
 class Obstacle {
   constructor(ctx, type, floorY) {
     this.ctx = ctx;
@@ -188,17 +170,16 @@ class Obstacle {
     this.x = ctx.canvas.width;
     this.y = floorY - type.height - GROUND_LIFT; // sit on floor
   }
-update(speedPerSec, dt) {
-  this.x -= speedPerSec * dt;
-  if (this.type.frameRate) {
-    this.frameTimer += dt;               // seconds
-    if (this.frameTimer >= 1 / this.type.frameRate) {
-      this.frame = (this.frame + 1) % this.type.images.length;
-      this.frameTimer = 0;
+  update(speedPerSec, dt) {
+    this.x -= speedPerSec * dt;
+    if (this.type.frameRate) {
+      this.frameTimer += dt;
+      if (this.frameTimer >= 1 / this.type.frameRate) {
+        this.frame = (this.frame + 1) % this.type.images.length;
+        this.frameTimer = 0;
+      }
     }
   }
-}
-
   draw() {
     const img = this.type.images[this.frame % this.type.images.length];
     this.ctx.drawImage(img, this.x, this.y, this.type.width, this.type.height);
@@ -208,9 +189,6 @@ update(speedPerSec, dt) {
   }
 }
 
-/**************
- * FLOOR
- **************/
 class Horizon {
   constructor(ctx, w, floorY) {
     this.ctx = ctx;
@@ -218,203 +196,203 @@ class Horizon {
     this.floorY = floorY;
     this.x = [0, w];
   }
-update(speedPerSec, dt) {
-  const dx = speedPerSec * dt;
-  this.x[0] -= dx;
-  this.x[1] -= dx;
-  if (this.x[0] <= -this.w) this.x[0] = this.x[1] + this.w;
-  if (this.x[1] <= -this.w) this.x[1] = this.x[0] + this.w;
-}
+  update(speedPerSec, dt) {
+    const dx = speedPerSec * dt;
+    this.x[0] -= dx;
+    this.x[1] -= dx;
+    if (this.x[0] <= -this.w) this.x[0] = this.x[1] + this.w;
+    if (this.x[1] <= -this.w) this.x[1] = this.x[0] + this.w;
+  }
   draw() {
     this.ctx.drawImage(IMG.floor, this.x[0], this.floorY, this.w, WORLD.FLOOR_HEIGHT);
     this.ctx.drawImage(IMG.floor, this.x[1], this.floorY, this.w, WORLD.FLOOR_HEIGHT);
   }
 }
 
-/**************
- * GAME
- **************/
+
+/* ======================
+   GAME
+====================== */
 class Game {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    this.ctx.imageSmoothingEnabled = true;
+
     this.width = canvas.width;
     this.height = canvas.height;
-    this.ctx.imageSmoothingEnabled = true; //
     this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
 
+    // player / world
     this.trex = new Trex(this.ctx, this.floorY);
     this.horizon = new Horizon(this.ctx, this.width, this.floorY);
+
+    // decorative overlay GIF (positioned with CSS)
     this.runnerGif = document.getElementById('runnerGif');
 
+    // state
     this.obstacles = [];
-    this.speed = 6;
-    this.isPlaying = false;
-    this.lastTime = null;
-
     this.clouds = [];
     this.birds = [];
-
-    this.hasEverStarted = false; // <- show "Press Space..." only the first time
+    this.isPlaying = false;
+    this.hasEverStarted = false;
+    this.lastTime = null;
 
     // HUD refs
     this.startMsg   = document.getElementById('startMsg');
     this.gameOverEl = document.getElementById('gameOver');
     this.restartBtn = document.getElementById('restartBtn');
 
-  // Hide it on first load
-  this.hideGameOver();
-    
+    // hide GO on load (HTML should also have class="hidden")
+    this.hideGameOver();
+
     // restart handlers
     this.restartBtn?.addEventListener('click', () => this.resetAndStart());
     this.restartBtn?.addEventListener('keydown', (e) => {
-    if (e.code === 'Enter' || e.code === 'Space') this.resetAndStart();
-  });
-    
+      if (e.code === 'Enter' || e.code === 'Space') this.resetAndStart();
+    });
+
     this.bindEvents();
     this.renderIdleScreen();
-
-    this.obstacleCooldown = 200; // ms until next obstacle can spawn  
   }
 
-  
-bindEvents() {
-  document.addEventListener('keydown', e => {
-    if (e.code !== 'Space') return;
+  /* helpers */
+  hideGameOver() { this.gameOverEl && this.gameOverEl.classList.add('hidden'); }
+  showGameOver() { this.gameOverEl && this.gameOverEl.classList.remove('hidden'); }
 
-    // 1) first time: allow space to start
-    if (!this.isPlaying && !this.hasEverStarted) {
-      this.start();
-      return;
-    }
+  bindEvents() {
+    document.addEventListener('keydown', e => {
+      if (e.code !== 'Space') return;
 
-    // 2) after game over: ignore space (must click restart)
-    if (!this.isPlaying && this.hasEverStarted) return;
+      // First time -> start
+      if (!this.isPlaying && !this.hasEverStarted) {
+        this.start();
+        return;
+      }
+      // After game over -> ignore (must click restart)
+      if (!this.isPlaying && this.hasEverStarted) return;
 
-    // 3) while playing: jump
-    this.trex.startJump();
-  });
+      // While playing -> jump
+      this.trex.startJump();
+    });
 
-  const mobileBtn = document.getElementById('mobile-btn');
-  mobileBtn.addEventListener('click', () => {
-    if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
-    if (!this.isPlaying) return; // post-collision, ignore
-    this.trex.startJump();
-  });
-}
+    const mobileBtn = document.getElementById('mobile-btn');
+    mobileBtn?.addEventListener('click', () => {
+      if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
+      if (!this.isPlaying) return; // post-collision
+      this.trex.startJump();
+    });
+  }
 
-
-
-// tiny helpers
-hideGameOver() { this.gameOverEl && this.gameOverEl.classList.add('hidden'); }
-showGameOver() { this.gameOverEl && this.gameOverEl.classList.remove('hidden'); }
-
-  
   start() {
-    this.hideGameOver();
     this.isPlaying = true;
     this.trex.status = 'RUNNING';
     this.lastTime = performance.now();
-  // Hide start message the first time only
-  if (!this.hasEverStarted) {
-    this.startMsg && (this.startMsg.style.display = 'none');
-    this.hasEverStarted = true;
-  }
-    
-    this.hideGameOver();   // <-- make sure it's hidden on start
-  requestAnimationFrame(this.update.bind(this));
-}
 
-end() {
-  this.isPlaying = false;
-  this.trex.status = 'IDLE';
-  this.runnerGif?.classList.add('hidden');
-  this.showGameOver();
-}
+    if (!this.hasEverStarted) {
+      this.startMsg && (this.startMsg.style.display = 'none');
+      this.hasEverStarted = true;
+    }
+    this.hideGameOver();
+    requestAnimationFrame(this.update.bind(this));
+  }
+
+  end() {
+    this.isPlaying = false;
+    this.trex.status = 'IDLE';
+    this.runnerGif?.classList.add('hidden'); // stop the gif
+    this.showGameOver();
+  }
+
+  reset() {
+    // Clear state
+    this.obstacles = [];
+    this.clouds = [];
+    this.birds = [];
+    this.lastTime = null;
+
+    // Reset player & floor
+    this.trex = new Trex(this.ctx, this.floorY);
+    this.horizon = new Horizon(this.ctx, this.width, this.floorY);
+
+    this.hideGameOver();
+    this.renderIdleScreen();
+  }
+
+  resetAndStart() { this.reset(); this.start(); }
 
   update(timestamp) {
-  const delta = (timestamp - this.lastTime) / 1000; // seconds
-  this.lastTime = timestamp;
+    const dt = (timestamp - this.lastTime) / 1000; // seconds
+    this.lastTime = timestamp;
 
     this.ctx.clearRect(0, 0, this.width, this.height);
 
-    // clouds (background)
-    this.updateClouds(delta);
+    // background
+    this.updateClouds(dt);
     this.clouds.forEach(c => c.draw());
 
-    // birds (background)
-    this.updateBirds(delta);
+    this.updateBirds(dt);
     this.birds.forEach(b => b.draw());
-    
+
     // floor
-    this.horizon.update(WORLD_SPEED, delta);
+    this.horizon.update(WORLD_SPEED, dt);
     this.horizon.draw();
 
     // obstacles
-    this.updateObstacles(delta);
+    this.updateObstacles(dt);
 
-    // show GIF while moving (RUNNING or JUMPING); hide on IDLE
-  const moving = this.trex.status === 'RUNNING' || this.trex.status === 'JUMPING';
-  if (moving) {
-  this.runnerGif?.classList.remove('hidden');
-  this.runnerGif.style.transform = `translate(${this.trex.x}px, ${this.trex.y}px)`;
-} else {
-  this.runnerGif?.classList.add('hidden');
-}
+    // runner GIF overlay (runs only while moving)
+    const moving = this.trex.status === 'RUNNING' || this.trex.status === 'JUMPING';
+    if (moving) {
+      this.runnerGif?.classList.remove('hidden');
+      this.runnerGif.style.transform = `translate(${this.trex.x}px, ${this.trex.y}px)`;
+    } else {
+      this.runnerGif?.classList.add('hidden');
+    }
 
-// end() – shown above: set status IDLE and hide gif
-
-    
-    // player
+    // player physics + fallback draw (idle image under gif)
     this.trex.update();
     if (!moving) this.trex.draw();
 
     if (this.isPlaying) requestAnimationFrame(this.update.bind(this));
   }
 
-  updateClouds(delta) {
+  updateClouds(dt) {
     if (Math.random() < 0.01 && this.clouds.length < 6) {
       this.clouds.push(new Cloud(this.ctx, this.width));
     }
-    this.clouds.forEach(c => c.update(delta));
+    this.clouds.forEach(c => c.update(dt));
     this.clouds = this.clouds.filter(c => c.isVisible());
   }
 
-updateBirds(delta) {
-  if (Math.random() < 0.005 && this.birds.length < 4) { 
-    this.birds.push(new Bird(this.ctx, this.width));
-  }
-  this.birds.forEach(b => b.update(delta));
-  this.birds = this.birds.filter(b => b.isVisible());
-}
-  
-updateObstacles(delta) {
-  // Only spawn if random chance AND last obstacle is far enough away
-  const canSpawn =
-    Math.random() < 0.02 &&
-    (this.obstacles.length === 0 ||
-     this.obstacles[this.obstacles.length - 1].x < this.width - 200); // tweak gap
-
-  if (canSpawn) {
-    const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-    // small +5 pushes it down so it sits right on the floor sprite
-    this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 4));
+  updateBirds(dt) {
+    if (Math.random() < 0.005 && this.birds.length < 4) {
+      this.birds.push(new Bird(this.ctx, this.width));
+    }
+    this.birds.forEach(b => b.update(dt));
+    this.birds = this.birds.filter(b => b.isVisible());
   }
 
-  // move/draw and check collisions
-this.obstacles.forEach(o => {
-  o.update(WORLD_SPEED, delta); // consistent speed-per-second
-  o.draw();
-  if (this.checkCollision(this.trex.getBounds(), o.getBounds())) {
-    this.end();
+  updateObstacles(dt) {
+    // spawn spaced out
+    const canSpawn =
+      Math.random() < 0.02 &&
+      (this.obstacles.length === 0 ||
+       this.obstacles[this.obstacles.length - 1].x < this.width - 200);
+
+    if (canSpawn) {
+      const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
+      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 4));
+    }
+
+    this.obstacles.forEach(o => {
+      o.update(WORLD_SPEED, dt);
+      o.draw();
+      if (this.checkCollision(this.trex.getBounds(), o.getBounds())) this.end();
+    });
+
+    this.obstacles = this.obstacles.filter(o => o.x + o.type.width > 0);
   }
-});
-
-
-  // cull off-screen
-  this.obstacles = this.obstacles.filter(o => o.x + o.type.width > 0);
-}
-
 
   checkCollision(r, o) {
     return !(r.x > o.x + o.width || r.x + r.width < o.x || r.y > o.y + o.height || r.y + r.height < o.y);
@@ -424,35 +402,7 @@ this.obstacles.forEach(o => {
     this.ctx.clearRect(0, 0, this.width, this.height);
     this.horizon.draw();
     this.trex.status = 'IDLE';
-    this.runnerGif?.classList.add('hidden'); 
+    this.runnerGif?.classList.add('hidden');
     this.trex.draw();
   }
-
-// reset state and immediately start
-resetAndStart() {
-  this.reset();    // clear state & draw idle
-  this.start();    // immediately play
 }
-  
-reset() {
-  // Clear state
-  this.obstacles = [];
-  this.clouds = [];
-  this.birds = [];
-  this.speed = 6;
-  this.lastTime = null;
-
-  // Reset player & floor
-  this.trex = new Trex(this.ctx, this.floorY);
-  this.horizon = new Horizon(this.ctx, this.width, this.floorY);
-
-  // Hide Game Over
-  this.hideGameOver();  // keep HUD clean
-  this.renderIdleScreen();
-}
-}
-
-
-/**************
- * INIT
- **************/
