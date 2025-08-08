@@ -59,7 +59,7 @@ html, body {
 
 /* Keep images reasonable relative to canvas */
 #gameOverImg {
-  max-width: 30%;
+  max-width: 20%;
   height: auto;
 }
 
