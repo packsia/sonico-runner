@@ -11,9 +11,9 @@ function loadImage(src) {
 
 const IMG = {
   runnerIdle: loadImage('assets/sonico-images/sonicoman.png'),
-  runnerRun: loadImage('assets/sonico-images/sonicoman.gif'),
-  floor: loadImage('assets/sonico-images/floor.png'),
-  cloud: loadImage('assets/sonico-images/cloud.png'),
+  runnerRun:  loadImage('assets/sonico-images/sonicoman.gif'),
+  floor:      loadImage('assets/sonico-images/floor.png'),
+  cloud:      loadImage('assets/sonico-images/cloud.png'),
   bird: [loadImage('assets/sonico-images/bird1.png'), loadImage('assets/sonico-images/bird2.png')],
   martini: [
     loadImage('assets/sonico-images/martini1.png'),
@@ -28,23 +28,29 @@ const IMG = {
     loadImage('assets/sonico-images/palm4.png')
   ],
   gameover: loadImage('assets/sonico-images/gameover.png'),
-  restart: loadImage('assets/sonico-images/restart.png')
+  restart:  loadImage('assets/sonico-images/restart.png')
 };
 
 /**************
  * CONFIG
  **************/
+const WORLD = {
+  FLOOR_HEIGHT: 20,
+  BOTTOM_PAD: 10
+};
+const GROUND_LIFT = 6; // tiny gap so sprites sit just above the floor
+
 const TrexConfig = {
   WIDTH: 78,
   HEIGHT: 88,
   X: 50,
-  JUMP_VELOCITY: -16, // was -10 → more negative = higher initial jump
-  GRAVITY: 0.55       // was 0.6 → a bit less gravity keeps you in the air longer
+  JUMP_VELOCITY: -16,
+  GRAVITY: 0.55
 };
 
 const ObstacleTypes = [
-  { images: IMG.martini, width: 30, height: 45, yPos: 90 },
-  { images: IMG.palm, width: 40, height: 56, yPos: 75 },
+  { images: IMG.martini, width: 30, height: 45 },
+  { images: IMG.palm,   width: 40, height: 56 }
 ];
 
 /**************
@@ -84,23 +90,24 @@ class Trex {
   }
 }
 
-// ADD: Cloud class
+/**************
+ * CLOUD
+ **************/
 class Cloud {
   constructor(ctx, canvasWidth) {
     this.ctx = ctx;
     this.x = canvasWidth + Math.random() * 200;
     const skyTop = 10;
-    const skyBottom = Math.max(60, ctx.canvas.height * 0.35); // top ~35% of screen
+    const skyBottom = Math.max(60, ctx.canvas.height * 0.35);
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
     this.speed = 1.5 + Math.random();
     this.width = 60;
     this.height = 30;
   }
-update(delta) {
-  const pxPerMs = this.speed * 0.06; // tune multiplier
-  this.x -= pxPerMs * (delta || 16);
-}
-
+  update(delta) {
+    const pxPerMs = this.speed * 0.06;
+    this.x -= pxPerMs * (delta || 16);
+  }
   draw() {
     this.ctx.drawImage(IMG.cloud, this.x, this.y, this.width, this.height);
   }
@@ -108,8 +115,6 @@ update(delta) {
     return this.x + this.width > 0;
   }
 }
-
-
 
 /**************
  * OBSTACLE
@@ -121,8 +126,7 @@ class Obstacle {
     this.frame = 0;
     this.frameTimer = 0;
     this.x = ctx.canvas.width;
-    // Sit on the floor, slightly lifted
-    this.y = floorY - type.height - GROUND_LIFT;
+    this.y = floorY - type.height - GROUND_LIFT; // sit on floor
   }
   update(speed, delta) {
     this.x -= speed;
@@ -174,18 +178,23 @@ class Game {
     this.ctx = canvas.getContext('2d');
     this.width = canvas.width;
     this.height = canvas.height;
+
     this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
-    this.trex = new Trex(this.ctx);
-    this.horizon = new Horizon(this.ctx, this.width);
+
+    this.trex = new Trex(this.ctx, this.floorY);
+    this.horizon = new Horizon(this.ctx, this.width, this.floorY);
+
     this.obstacles = [];
     this.speed = 6;
     this.isPlaying = false;
     this.lastTime = null;
-    this.bindEvents();
-    this.renderIdleScreen();
+
     this.clouds = [];
 
+    this.bindEvents();
+    this.renderIdleScreen();
   }
+
   bindEvents() {
     document.addEventListener('keydown', e => {
       if (e.code === 'Space') {
@@ -203,48 +212,57 @@ class Game {
       }
     });
   }
+
   start() {
     this.isPlaying = true;
     this.trex.status = 'RUNNING';
     this.lastTime = performance.now();
     requestAnimationFrame(this.update.bind(this));
   }
+
   end() {
     this.isPlaying = false;
     document.getElementById('mobile-btn').textContent = 'Start';
     this.renderIdleScreen();
   }
+
   update(timestamp) {
     const delta = timestamp - this.lastTime;
     this.lastTime = timestamp;
+
     this.ctx.clearRect(0, 0, this.width, this.height);
+
+    // clouds (background)
     this.updateClouds(delta);
     this.clouds.forEach(c => c.draw());
+
+    // floor
     this.horizon.update(this.speed);
     this.horizon.draw();
+
+    // obstacles
     this.updateObstacles(delta);
+
+    // player
     this.trex.update();
     this.trex.draw();
+
     if (this.isPlaying) requestAnimationFrame(this.update.bind(this));
   }
 
-updateClouds(delta) {
-  // Spawn occasionally; cap total clouds
-  if (Math.random() < 0.01 && this.clouds.length < 6) {
-    this.clouds.push(new Cloud(this.ctx, this.width));
+  updateClouds(delta) {
+    if (Math.random() < 0.01 && this.clouds.length < 6) {
+      this.clouds.push(new Cloud(this.ctx, this.width));
+    }
+    this.clouds.forEach(c => c.update(delta));
+    this.clouds = this.clouds.filter(c => c.isVisible());
   }
 
-  // Move & cull
-  this.clouds.forEach(c => c.update(delta)); // delta is ignored in Cloud, but fine to pass
-  this.clouds = this.clouds.filter(c => c.isVisible());
-}
-
-  
-updateObstacles(delta) {
-  if (Math.random() < 0.02) {
-    const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-    this.obstacles.push(new Obstacle(this.ctx, type, this.floorY));
-  }
+  updateObstacles(delta) {
+    if (Math.random() < 0.02) {
+      const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
+      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY));
+    }
     this.obstacles.forEach(o => {
       o.update(this.speed, delta);
       o.draw();
@@ -254,9 +272,11 @@ updateObstacles(delta) {
     });
     this.obstacles = this.obstacles.filter(o => o.x + o.type.width > 0);
   }
+
   checkCollision(r, o) {
     return !(r.x > o.x + o.width || r.x + r.width < o.x || r.y > o.y + o.height || r.y + r.height < o.y);
   }
+
   renderIdleScreen() {
     this.ctx.clearRect(0, 0, this.width, this.height);
     this.horizon.draw();
@@ -270,13 +290,7 @@ updateObstacles(delta) {
  **************/
 window.onload = function() {
   const canvas = document.getElementById('game');
-  canvas.width = 800;
-  canvas.height = 600;
+  canvas.width  = 800;
+  canvas.height = 600; // taller window
   new Game(canvas);
 };
-
-const WORLD = {
-  FLOOR_HEIGHT: 20,
-  BOTTOM_PAD: 10
-};
-
