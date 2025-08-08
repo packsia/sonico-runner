@@ -81,3 +81,5 @@ html, body {
   #mobile-btn { display:block; }
 }
 
+/* add or keep this near the END of index.css */
+.hidden { display: none !important; }
