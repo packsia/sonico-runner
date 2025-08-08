@@ -393,7 +393,7 @@ updateObstacles(delta) {
     this.trex.status = 'IDLE';
     this.trex.draw();
   }
-}
+
 
 reset() {
   // Clear state
@@ -413,14 +413,9 @@ reset() {
   // Do NOT show the start message again (per “first time only”)
   this.renderIdleScreen();
 }
+}
 
 
 /**************
  * INIT
  **************/
-window.onload = function() {
-  const canvas = document.getElementById('game');
-  canvas.width  = 800;
-  canvas.height = 500; // taller window
-  new Game(canvas);
-};
