@@ -38,13 +38,13 @@ const WORLD = {
   FLOOR_HEIGHT: 20,
   BOTTOM_PAD: 10
 };
-const GROUND_LIFT = 6; // tiny gap so sprites sit just above the floor
+const GROUND_LIFT = 4; // tiny gap so sprites sit just above the floor
 
 const TrexConfig = {
   WIDTH: 78,
   HEIGHT: 88,
   X: 50,
-  JUMP_VELOCITY: -16,
+  JUMP_VELOCITY: -12,
   GRAVITY: 0.55
 };
 
@@ -115,6 +115,48 @@ class Cloud {
     return this.x + this.width > 0;
   }
 }
+
+/**************
+ * BIRD
+ **************/
+class Bird {
+  constructor(ctx, canvasWidth) {
+    this.ctx = ctx;
+    this.x = canvasWidth + Math.random() * 200;
+    const skyTop = 20;
+    const skyBottom = Math.max(60, ctx.canvas.height * 0.5); 
+    this.y = skyTop + Math.random() * (skyBottom - skyTop);
+
+    this.speed = 3 + Math.random() * 1.5; // slightly faster than clouds
+    this.width = 46; 
+    this.height = 40;
+
+    this.frame = 0;
+    this.frameTimer = 0;
+    this.frameRate = 6; // flaps per second
+  }
+  update(delta) {
+    const pxPerMs = this.speed * 0.06;
+    this.x -= pxPerMs * (delta || 16);
+
+    // animate wings
+    this.frameTimer += delta;
+    if (this.frameTimer >= 1000 / this.frameRate) {
+      this.frame = (this.frame + 1) % IMG.bird.length;
+      this.frameTimer = 0;
+    }
+  }
+  draw() {
+    const img = IMG.bird[this.frame];
+    this.ctx.drawImage(img, this.x, this.y, this.width, this.height);
+  }
+  isVisible() {
+    return this.x + this.width > 0;
+  }
+}
+
+
+
 
 /**************
  * OBSTACLE
@@ -190,6 +232,7 @@ class Game {
     this.lastTime = null;
 
     this.clouds = [];
+    this.birds = [];
 
     this.bindEvents();
     this.renderIdleScreen();
@@ -236,6 +279,10 @@ class Game {
     this.updateClouds(delta);
     this.clouds.forEach(c => c.draw());
 
+    // birds (background)
+    this.updateBirds(delta);
+    this.birds.forEach(b => b.draw());
+    
     // floor
     this.horizon.update(this.speed);
     this.horizon.draw();
@@ -258,6 +305,14 @@ class Game {
     this.clouds = this.clouds.filter(c => c.isVisible());
   }
 
+updateBirds(delta) {
+  if (Math.random() < 0.005 && this.birds.length < 4) { 
+    this.birds.push(new Bird(this.ctx, this.width));
+  }
+  this.birds.forEach(b => b.update(delta));
+  this.birds = this.birds.filter(b => b.isVisible());
+}
+  
   updateObstacles(delta) {
     if (Math.random() < 0.02) {
       const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
