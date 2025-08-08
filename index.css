@@ -13,3 +13,43 @@ canvas {
   border: 2px solid #000;
 }
 
+/* Make the canvas a positioning context */
+canvas { position: relative; }
+
+/* HUD sits centered on top of the canvas */
+#hud {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none; /* HUD won't steal clicks except the button */
+}
+
+/* Start text */
+#startMsg {
+  font-family: sans-serif;
+  font-size: 18px;
+  color: #000; /* pick what works on your background */
+  background: rgba(255,255,255,0.6);
+  padding: 8px 14px;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+/* Game over block: image + restart button stacked */
+#gameOver {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+#restartBtn {
+  width: 44px; height: 44px; /* tweak for your asset */
+  cursor: pointer;
+  pointer-events: auto; /* clickable */
+}
+
+.hidden { display: none; }
+
+/* Mobile: keep using your existing rule that hides the "Press Space..." text */
+@media (max-width: 768px) { #startMsg { display:none; } }
