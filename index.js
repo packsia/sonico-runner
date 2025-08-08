@@ -38,24 +38,24 @@ const TrexConfig = {
   WIDTH: 78,
   HEIGHT: 88,
   X: 50,
-  JUMP_VELOCITY: -10,
-  GRAVITY: 0.6
+  JUMP_VELOCITY: -16, // was -10 → more negative = higher initial jump
+  GRAVITY: 0.55       // was 0.6 → a bit less gravity keeps you in the air longer
 };
 
 const ObstacleTypes = [
-  { images: IMG.martini, width: 40, height: 60, yPos: 90 },
-  { images: IMG.palm, width: 50, height: 70, yPos: 75 },
+  { images: IMG.martini, width: 30, height: 45, yPos: 90 },
+  { images: IMG.palm, width: 40, height: 56, yPos: 75 },
 ];
 
 /**************
  * TREX
  **************/
 class Trex {
-  constructor(ctx) {
+  constructor(ctx, floorY) {
     this.ctx = ctx;
     this.x = TrexConfig.X;
-    this.y = 150 - TrexConfig.HEIGHT;
-    this.groundY = 150 - TrexConfig.HEIGHT;
+    this.groundY = floorY - TrexConfig.HEIGHT;
+    this.y = this.groundY;
     this.status = 'IDLE';
     this.jumpVel = 0;
   }
@@ -88,10 +88,12 @@ class Trex {
 class Cloud {
   constructor(ctx, canvasWidth) {
     this.ctx = ctx;
-    this.x = canvasWidth + Math.random() * 200; // start just off-screen
-    this.y = 20 + Math.random() * 70;           // high in the sky
-    this.speed = 1.5 + Math.random();           // slower than ground (parallax)
-    this.width = 60;  // adjust to your cloud asset
+    this.x = canvasWidth + Math.random() * 200;
+    const skyTop = 10;
+    const skyBottom = Math.max(60, ctx.canvas.height * 0.35); // top ~35% of screen
+    this.y = skyTop + Math.random() * (skyBottom - skyTop);
+    this.speed = 1.5 + Math.random();
+    this.width = 60;
     this.height = 30;
   }
 update(delta) {
@@ -113,13 +115,14 @@ update(delta) {
  * OBSTACLE
  **************/
 class Obstacle {
-  constructor(ctx, type) {
+  constructor(ctx, type, floorY) {
     this.ctx = ctx;
     this.type = type;
     this.frame = 0;
     this.frameTimer = 0;
-    this.x = 800;
-    this.y = type.yPos;
+    this.x = ctx.canvas.width;
+    // Sit on the floor, slightly lifted
+    this.y = floorY - type.height - GROUND_LIFT;
   }
   update(speed, delta) {
     this.x -= speed;
@@ -144,9 +147,10 @@ class Obstacle {
  * FLOOR
  **************/
 class Horizon {
-  constructor(ctx, w) {
+  constructor(ctx, w, floorY) {
     this.ctx = ctx;
     this.w = w;
+    this.floorY = floorY;
     this.x = [0, w];
   }
   update(speed) {
@@ -156,8 +160,8 @@ class Horizon {
     if (this.x[1] <= -this.w) this.x[1] = this.x[0] + this.w;
   }
   draw() {
-    this.ctx.drawImage(IMG.floor, this.x[0], 130, this.w, 20);
-    this.ctx.drawImage(IMG.floor, this.x[1], 130, this.w, 20);
+    this.ctx.drawImage(IMG.floor, this.x[0], this.floorY, this.w, WORLD.FLOOR_HEIGHT);
+    this.ctx.drawImage(IMG.floor, this.x[1], this.floorY, this.w, WORLD.FLOOR_HEIGHT);
   }
 }
 
@@ -170,6 +174,7 @@ class Game {
     this.ctx = canvas.getContext('2d');
     this.width = canvas.width;
     this.height = canvas.height;
+    this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
     this.trex = new Trex(this.ctx);
     this.horizon = new Horizon(this.ctx, this.width);
     this.obstacles = [];
@@ -235,11 +240,11 @@ updateClouds(delta) {
 }
 
   
-  updateObstacles(delta) {
-    if (Math.random() < 0.02) {
-      const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-      this.obstacles.push(new Obstacle(this.ctx, type));
-    }
+updateObstacles(delta) {
+  if (Math.random() < 0.02) {
+    const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
+    this.obstacles.push(new Obstacle(this.ctx, type, this.floorY));
+  }
     this.obstacles.forEach(o => {
       o.update(this.speed, delta);
       o.draw();
@@ -266,6 +271,12 @@ updateClouds(delta) {
 window.onload = function() {
   const canvas = document.getElementById('game');
   canvas.width = 800;
-  canvas.height = 300;
+  canvas.height = 600;
   new Game(canvas);
 };
+
+const WORLD = {
+  FLOOR_HEIGHT: 20,
+  BOTTOM_PAD: 10
+};
+
