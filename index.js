@@ -1,5 +1,20 @@
 'use strict';
 
+window.onload = function() {
+  const canvas = document.getElementById('game');
+  canvas.width  = 800;
+  canvas.height = 500;
+
+  // Match the stage size to the canvas size
+  const stage = document.getElementById('stage');
+  stage.style.width  = canvas.width + 'px';
+  stage.style.height = canvas.height + 'px';
+
+  new Game(canvas);
+};
+
+
+
 /**************
  * IMAGE LOADER
  **************/
