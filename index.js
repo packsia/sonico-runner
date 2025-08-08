@@ -67,7 +67,7 @@ const TrexConfig = {
   WIDTH: 100,           // must be a number (not "auto")
   HEIGHT: 100,
   X: 50,
-  JUMP_VELOCITY: -10,   // more negative = higher initial jump
+  JUMP_VELOCITY: -15,   // more negative = higher initial jump
   GRAVITY: 0.9          // higher = falls faster
 };
 
