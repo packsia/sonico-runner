@@ -47,13 +47,13 @@ html, body {
 
 /* Keep images reasonable relative to canvas */
 #gameOverImg {
-  max-width: 60%;
+  max-width: 30%;
   height: auto;
 }
 
 #restartBtn {
-  width: 64px;  /* adjust if you like */
-  height: 64px;
+  width: 37px;  /* adjust if you like */
+  height: 37px;
   cursor: pointer;
   pointer-events: auto; /* clickable */
 }
