@@ -61,7 +61,7 @@ const WORLD = {
 const WORLD_SPEED = 500;
 
 // tiny gap so sprites sit just above the floor
-const GROUND_LIFT = -2;
+const GROUND_LIFT = 2;
 
 const TrexConfig = {
   WIDTH: 100,           // must be a number (not "auto")
@@ -122,7 +122,7 @@ class Cloud {
     const skyBottom = Math.max(60, ctx.canvas.height * 0.35);
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
     this.speed = 40 + Math.random() * 40;   // px/sec
-    this.width = auto;
+    this.width = 60;
     this.height = 40;
   }
   update(dt) { this.x -= this.speed * dt; }
