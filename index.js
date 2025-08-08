@@ -190,14 +190,15 @@ class Obstacle {
   }
 update(speedPerSec, dt) {
   this.x -= speedPerSec * dt;
-    if (this.type.frameRate) {
-      this.frameTimer += delta;
-      if (this.frameTimer >= 1000 / this.type.frameRate) {
-        this.frame = (this.frame + 1) % this.type.images.length;
-        this.frameTimer = 0;
-      }
+  if (this.type.frameRate) {
+    this.frameTimer += dt;               // seconds
+    if (this.frameTimer >= 1 / this.type.frameRate) {
+      this.frame = (this.frame + 1) % this.type.images.length;
+      this.frameTimer = 0;
     }
   }
+}
+
   draw() {
     const img = this.type.images[this.frame % this.type.images.length];
     this.ctx.drawImage(img, this.x, this.y, this.type.width, this.type.height);
@@ -261,6 +262,9 @@ class Game {
     this.gameOverEl = document.getElementById('gameOver');
     this.restartBtn = document.getElementById('restartBtn');
 
+  // Hide it on first load
+  this.hideGameOver();
+    
     // restart handlers
     this.restartBtn?.addEventListener('click', () => this.resetAndStart());
     this.restartBtn?.addEventListener('keydown', (e) => {
@@ -304,7 +308,7 @@ bindEvents() {
 // tiny helpers
 hideGameOver() { this.gameOverEl && this.gameOverEl.classList.add('hidden'); }
 showGameOver() { this.gameOverEl && this.gameOverEl.classList.remove('hidden'); }
-  this.hideGameOver();
+
   
   start() {
     this.hideGameOver();
@@ -398,13 +402,14 @@ updateObstacles(delta) {
   }
 
   // move/draw and check collisions
-  this.obstacles.forEach(o => {
-    o.update(this.speed, delta);
-    o.draw();
-    if (this.checkCollision(this.trex.getBounds(), o.getBounds())) {
-      this.end();
-    }
-  });
+this.obstacles.forEach(o => {
+  o.update(WORLD_SPEED, delta); // consistent speed-per-second
+  o.draw();
+  if (this.checkCollision(this.trex.getBounds(), o.getBounds())) {
+    this.end();
+  }
+});
+
 
   // cull off-screen
   this.obstacles = this.obstacles.filter(o => o.x + o.type.width > 0);
