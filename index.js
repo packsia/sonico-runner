@@ -61,7 +61,7 @@ const WORLD = {
 const WORLD_SPEED = 500;
 
 // tiny gap so sprites sit just above the floor
-const GROUND_LIFT = 0;
+const GROUND_LIFT = -2;
 
 const TrexConfig = {
   WIDTH: 100,           // must be a number (not "auto")
@@ -382,7 +382,7 @@ class Game {
 
     if (canSpawn) {
       const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 3));
+      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 0));
     }
 
     this.obstacles.forEach(o => {
