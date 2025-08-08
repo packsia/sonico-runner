@@ -222,16 +222,16 @@ class Game {
     if (this.isPlaying) requestAnimationFrame(this.update.bind(this));
   }
 
-// ADD: cloud spawner/updater (non-colliding)
-updateClouds(delta) {
-  // spawn occasionally (tweak the 0.01 as you like)
-  if (Math.random() < 0.01 && this.clouds.length < 6) {
-    this.clouds.push(new Cloud(this.ctx, this.width));
-  }
-
-  this.clouds.forEach(c => c.update(delta));
-  this.clouds = this.clouds.filter(c => c.isVisible());
-}
+    updateClouds(deltaTime) {
+        if (Math.random() < 0.005) {
+            this.clouds.push(new Cloud(this.ctx, this.dimensions.WIDTH, Math.random() * 50));
+        }
+        this.clouds.forEach(cloud => {
+            cloud.update(this.speed / 2);
+            cloud.draw();
+        });
+        this.clouds = this.clouds.filter(cloud => cloud.xPos + CloudConfig.WIDTH > 0);
+    }
   
   updateObstacles(delta) {
     if (Math.random() < 0.02) {
