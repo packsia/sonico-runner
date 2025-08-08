@@ -323,7 +323,7 @@ if (
    this.obstacles[this.obstacles.length - 1].x < this.width - 400) // 400px gap
 ) {
   const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-  this.obstacles.push(new Obstacle(this.ctx, type, this.floorY));
+  this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 5));
 }
 
     this.obstacles.forEach(o => {
@@ -354,6 +354,6 @@ if (
 window.onload = function() {
   const canvas = document.getElementById('game');
   canvas.width  = 800;
-  canvas.height = 600; // taller window
+  canvas.height = 500; // taller window
   new Game(canvas);
 };
