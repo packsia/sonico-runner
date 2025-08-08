@@ -67,13 +67,13 @@ const TrexConfig = {
   WIDTH: 100,           // must be a number (not "auto")
   HEIGHT: 100,
   X: 50,
-  JUMP_VELOCITY: -15,   // more negative = higher initial jump
-  GRAVITY: 0.9          // higher = falls faster
+  JUMP_VELOCITY: -16,   // more negative = higher initial jump
+  GRAVITY: 0.8          // higher = falls faster
 };
 
 const ObstacleTypes = [
-  { images: IMG.martini, width: 30, height: 45 },
-  { images: IMG.palm,    width: 70, height: 75 }
+  { images: IMG.martini, width: 34, height: 45 },
+  { images: IMG.palm,    width: 51, height: 75 }
 ];
 
 
