@@ -85,6 +85,29 @@ class Trex {
   }
 }
 
+// ADD: Cloud class
+class Cloud {
+  constructor(ctx, canvasWidth) {
+    this.ctx = ctx;
+    this.x = canvasWidth + Math.random() * 200; // start just off-screen
+    this.y = 20 + Math.random() * 70;           // high in the sky
+    this.speed = 1.5 + Math.random();           // slower than ground (parallax)
+    this.width = 60;  // adjust to your cloud asset
+    this.height = 30;
+  }
+  update(delta) {
+    this.x -= this.speed; // speed is already “per frame” for this simple game
+  }
+  draw() {
+    this.ctx.drawImage(IMG.cloud, this.x, this.y, this.width, this.height);
+  }
+  isVisible() {
+    return this.x + this.width > 0;
+  }
+}
+
+
+
 /**************
  * OBSTACLE
  **************/
@@ -154,6 +177,8 @@ class Game {
     this.lastTime = null;
     this.bindEvents();
     this.renderIdleScreen();
+    this.clouds = [];
+
   }
   bindEvents() {
     document.addEventListener('keydown', e => {
@@ -187,13 +212,27 @@ class Game {
     const delta = timestamp - this.lastTime;
     this.lastTime = timestamp;
     this.ctx.clearRect(0, 0, this.width, this.height);
+    this.updateClouds(delta);
+    this.clouds.forEach(c => c.draw());
     this.horizon.update(this.speed);
     this.horizon.draw();
+    this.updateObstacles(delta);
     this.trex.update();
     this.trex.draw();
-    this.updateObstacles(delta);
     if (this.isPlaying) requestAnimationFrame(this.update.bind(this));
   }
+
+// ADD: cloud spawner/updater (non-colliding)
+updateClouds(delta) {
+  // spawn occasionally (tweak the 0.01 as you like)
+  if (Math.random() < 0.01 && this.clouds.length < 6) {
+    this.clouds.push(new Cloud(this.ctx, this.width));
+  }
+
+  this.clouds.forEach(c => c.update(delta));
+  this.clouds = this.clouds.filter(c => c.isVisible());
+}
+  
   updateObstacles(delta) {
     if (Math.random() < 0.02) {
       const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
