@@ -38,14 +38,14 @@ const WORLD = {
   FLOOR_HEIGHT: 20,
   BOTTOM_PAD: 10
 };
-const GROUND_LIFT = 1; // tiny gap so sprites sit just above the floor
+const GROUND_LIFT = 0; // tiny gap so sprites sit just above the floor
 
 const TrexConfig = {
   WIDTH: 78,
   HEIGHT: 88,
   X: 50,
-  JUMP_VELOCITY: -10,
-  GRAVITY: 0.2
+  JUMP_VELOCITY: -15,
+  GRAVITY: 0.55
 };
 
 const ObstacleTypes = [
