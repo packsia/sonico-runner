@@ -237,7 +237,7 @@ class Game {
     this.bindEvents();
     this.renderIdleScreen();
 
-    this.obstacleCooldown = 0; // ms until next obstacle can spawn
+    this.obstacleCooldown = 200; // ms until next obstacle can spawn
 
   }
 
@@ -320,7 +320,7 @@ updateBirds(delta) {
 if (
   Math.random() < 0.02 &&
   (this.obstacles.length === 0 || 
-   this.obstacles[this.obstacles.length - 1].x < this.width - 200) // 200px gap
+   this.obstacles[this.obstacles.length - 1].x < this.width - 400) // 400px gap
 ) {
   const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
   this.obstacles.push(new Obstacle(this.ctx, type, this.floorY));
