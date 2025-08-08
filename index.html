@@ -1,95 +1,51 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
-  />
+  <meta charset="UTF-8" />
   <title>Sonico Runner</title>
-
-  <!-- You can keep your old index.css. These tiny overrides remove the box and style the UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    html,body{height:100%;margin:0;padding:0;background:transparent}
-    .interstitial-wrapper{position:relative;max-width:1000px;margin:0 auto;}
-    .runner-canvas{display:block;width:100%;height:auto;background:transparent;border:none;outline:none}
-    #ui {
-      position:relative;
-      max-width:1000px;
-      margin:0 auto;
-      padding:0 12px;
-      text-align:center;
-      user-select:none;
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    #desktopHint{
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
-      color:#8f1f1f; /* matches sprite tone */
-      font-weight:600;
-      margin:16px 0 0;
-      display:none;
+    canvas {
+      background: transparent;
+      display: block;
     }
-    #mobileBtn{
-      display:none;
-      margin:12px auto 0;
-      padding:12px 22px;
-      border-radius:8px;
-      border:0;
-      background:#9f2626;
-      color:#fff;
-      font-size:18px;
-      font-weight:700;
+    #message {
+      font-family: sans-serif;
+      font-size: 16px;
+      color: #a22;
+      margin-bottom: 8px;
+      text-align: center;
     }
-    /* absolutely-positioned runner images (so GIF actually animates) */
-    #runnerLayer{
-      position:absolute; inset:0; pointer-events:none;
-      transform:translateZ(0); /* keep it crisp on iOS */
+    #mobile-btn {
+      display: none;
+      font-size: 18px;
+      padding: 8px 16px;
+      background: #a22;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
-    .runnerSprite{
-      position:absolute; left:0; top:0; width:78px; height:88px;
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: pixelated;
-      display:none;
+    @media (max-width: 768px) {
+      #message { display: none; }
+      #mobile-btn { display: block; }
     }
   </style>
 </head>
-
-<body class="offline">
-  <div class="interstitial-wrapper">
-    <!-- Canvas sits on a transparent page; no borders -->
-    <canvas id="game" class="runner-canvas" aria-label="Sonico Runner"></canvas>
-
-    <!-- A separate absolutely-positioned layer where we place the PNG/GIF
-         so the GIF can play natively while we move it with JS -->
-    <div id="runnerLayer">
-      <img id="runnerIdle" class="runnerSprite" alt="runner idle"
-           src="assets/sonico-images/sonicoman.png" />
-      <img id="runnerRun" class="runnerSprite" alt="runner running"
-           src="assets/sonico-images/sonicoman.gif" />
-    </div>
-  </div>
-
-  <div id="ui">
-    <div id="desktopHint">Press Space to Start</div>
-    <button id="mobileBtn" type="button">Start</button>
-  </div>
-
-  <!-- Hidden resources (same filenames you already have) -->
-  <div id="offline-resources" style="display:none">
-    <img id="img-floor"   src="assets/sonico-images/floor.png" />
-    <img id="img-cloud"   src="assets/sonico-images/cloud.png" />
-    <img id="img-bird1"   src="assets/sonico-images/bird1.png" />
-    <img id="img-bird2"   src="assets/sonico-images/bird2.png" />
-    <img id="img-m1"      src="assets/sonico-images/martini1.png" />
-    <img id="img-m2"      src="assets/sonico-images/martini2.png" />
-    <img id="img-m3"      src="assets/sonico-images/martini3.png" />
-    <img id="img-m4"      src="assets/sonico-images/martini4.png" />
-    <img id="img-p1"      src="assets/sonico-images/palm1.png" />
-    <img id="img-p2"      src="assets/sonico-images/palm2.png" />
-    <img id="img-p3"      src="assets/sonico-images/palm3.png" />
-    <img id="img-p4"      src="assets/sonico-images/palm4.png" />
-    <img id="img-gameover" src="assets/sonico-images/gameover.png" />
-    <img id="img-restart"  src="assets/sonico-images/restart.png" />
-  </div>
+<body>
+  <div id="message">Press Space to Start</div>
+  <canvas id="game"></canvas>
+  <button id="mobile-btn">Start</button>
 
   <script src="index.js"></script>
 </body>
