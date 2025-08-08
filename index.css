@@ -1,6 +1,9 @@
+/* Base reset */
+html, body { margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; }
+
 /* Center the stage on the page (optional) */
-body {
-  margin: 0;
+html, body {
   display: grid;
   place-items: start center; /* top-center like your screenshot */
   background: transparent;
@@ -27,7 +30,7 @@ body {
 
 /* Start message */
 #startMsg {
-  font-family: sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 18px;
   color: #7d1717;
   background: rgba(255,255,255,0.7);
