@@ -53,7 +53,7 @@ html, body {
 /* Game over stack */
 #gameOver {
   display: grid;
-  gap: 10px;
+  gap: 20px;
   justify-items: center;
 }
 
