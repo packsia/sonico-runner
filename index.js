@@ -225,6 +225,6 @@ class Game {
 window.onload = function() {
   const canvas = document.getElementById('game');
   canvas.width = 800;
-  canvas.height = 150;
+  canvas.height = 300;
   new Game(canvas);
 };
