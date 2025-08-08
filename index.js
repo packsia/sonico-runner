@@ -61,7 +61,7 @@ const WORLD = {
 const WORLD_SPEED = 500;
 
 // tiny gap so sprites sit just above the floor
-const GROUND_LIFT = 2;
+const GROUND_LIFT = -2;
 
 const TrexConfig = {
   WIDTH: 100,           // must be a number (not "auto")
