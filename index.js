@@ -53,6 +53,9 @@ const WORLD = {
   FLOOR_HEIGHT: 20,
   BOTTOM_PAD: 10
 };
+
+const WORLD_SPEED = 300; // px/sec
+
 const GROUND_LIFT = 0; // tiny gap so sprites sit just above the floor
 
 const TrexConfig = {
@@ -185,8 +188,8 @@ class Obstacle {
     this.x = ctx.canvas.width;
     this.y = floorY - type.height - GROUND_LIFT; // sit on floor
   }
-  update(speed, delta) {
-    this.x -= speed;
+update(speedPerSec, dt) {
+  this.x -= speedPerSec * dt;
     if (this.type.frameRate) {
       this.frameTimer += delta;
       if (this.frameTimer >= 1000 / this.type.frameRate) {
@@ -214,12 +217,13 @@ class Horizon {
     this.floorY = floorY;
     this.x = [0, w];
   }
-  update(speed) {
-    this.x[0] -= speed;
-    this.x[1] -= speed;
-    if (this.x[0] <= -this.w) this.x[0] = this.x[1] + this.w;
-    if (this.x[1] <= -this.w) this.x[1] = this.x[0] + this.w;
-  }
+update(speedPerSec, dt) {
+  const dx = speedPerSec * dt;
+  this.x[0] -= dx;
+  this.x[1] -= dx;
+  if (this.x[0] <= -this.w) this.x[0] = this.x[1] + this.w;
+  if (this.x[1] <= -this.w) this.x[1] = this.x[0] + this.w;
+}
   draw() {
     this.ctx.drawImage(IMG.floor, this.x[0], this.floorY, this.w, WORLD.FLOOR_HEIGHT);
     this.ctx.drawImage(IMG.floor, this.x[1], this.floorY, this.w, WORLD.FLOOR_HEIGHT);
@@ -235,7 +239,7 @@ class Game {
     this.ctx = canvas.getContext('2d');
     this.width = canvas.width;
     this.height = canvas.height;
-
+    this.ctx.imageSmoothingEnabled = true; //
     this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
 
     this.trex = new Trex(this.ctx, this.floorY);
@@ -325,8 +329,8 @@ end() {
 }
 
   update(timestamp) {
-    const delta = timestamp - this.lastTime;
-    this.lastTime = timestamp;
+  const delta = (timestamp - this.lastTime) / 1000; // seconds
+  this.lastTime = timestamp;
 
     this.ctx.clearRect(0, 0, this.width, this.height);
 
@@ -339,20 +343,23 @@ end() {
     this.birds.forEach(b => b.draw());
     
     // floor
-    this.horizon.update(this.speed);
+    this.horizon.update(WORLD_SPEED, delta);
     this.horizon.draw();
 
     // obstacles
     this.updateObstacles(delta);
 
     // show GIF while moving (RUNNING or JUMPING); hide on IDLE
-    const moving = this.trex.status === 'RUNNING' || this.trex.status === 'JUMPING';
-    if (moving) {
-      this.runnerGif?.classList.remove('hidden');
-      this.runnerGif.style.transform = `translate(${this.trex.x}px, ${this.trex.y}px)`;
-    } else {
-      this.runnerGif?.classList.add('hidden');
-    }
+  const moving = this.trex.status === 'RUNNING' || this.trex.status === 'JUMPING';
+  if (moving) {
+  this.runnerGif?.classList.remove('hidden');
+  this.runnerGif.style.transform = `translate(${this.trex.x}px, ${this.trex.y}px)`;
+} else {
+  this.runnerGif?.classList.add('hidden');
+}
+
+// end() – shown above: set status IDLE and hide gif
+
     
     // player
     this.trex.update();
