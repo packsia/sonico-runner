@@ -53,12 +53,12 @@ const IMG = {
    CONFIG
 ====================== */
 const WORLD = {
-  FLOOR_HEIGHT: 20,
+  FLOOR_HEIGHT: 10,
   BOTTOM_PAD: 10
 };
 
 // Scroll speed (pixels / second)
-const WORLD_SPEED = 300;
+const WORLD_SPEED = 500;
 
 // tiny gap so sprites sit just above the floor
 const GROUND_LIFT = 0;
@@ -68,7 +68,7 @@ const TrexConfig = {
   HEIGHT: 100,
   X: 50,
   JUMP_VELOCITY: -10,   // more negative = higher initial jump
-  GRAVITY: 0.3          // higher = falls faster
+  GRAVITY: 0.9          // higher = falls faster
 };
 
 const ObstacleTypes = [
@@ -122,8 +122,8 @@ class Cloud {
     const skyBottom = Math.max(60, ctx.canvas.height * 0.35);
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
     this.speed = 40 + Math.random() * 40;   // px/sec
-    this.width = 60;
-    this.height = 30;
+    this.width = auto;
+    this.height = 40;
   }
   update(dt) { this.x -= this.speed * dt; }
   draw() { this.ctx.drawImage(IMG.cloud, this.x, this.y, this.width, this.height); }
@@ -378,11 +378,11 @@ class Game {
     const canSpawn =
       Math.random() < 0.02 &&
       (this.obstacles.length === 0 ||
-       this.obstacles[this.obstacles.length - 1].x < this.width - 200);
+       this.obstacles[this.obstacles.length - 1].x < this.width - 300);
 
     if (canSpawn) {
       const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 4));
+      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 3));
     }
 
     this.obstacles.forEach(o => {
