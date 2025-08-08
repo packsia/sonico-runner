@@ -45,7 +45,6 @@ const TrexConfig = {
 const ObstacleTypes = [
   { images: IMG.martini, width: 40, height: 60, yPos: 90 },
   { images: IMG.palm, width: 50, height: 70, yPos: 75 },
-  { images: IMG.bird, width: 46, height: 40, yPos: 70, frameRate: 6 }
 ];
 
 /**************
