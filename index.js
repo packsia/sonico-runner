@@ -316,25 +316,32 @@ updateBirds(delta) {
   this.birds = this.birds.filter(b => b.isVisible());
 }
   
-// Only spawn if random chance AND last obstacle is far enough away
-if (
-  Math.random() < 0.02 &&
-  (this.obstacles.length === 0 || 
-   this.obstacles[this.obstacles.length - 1].x < this.width - 400) // 400px gap
-) {
-  const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-  this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 5));
+updateObstacles(delta) {
+  // Only spawn if random chance AND last obstacle is far enough away
+  const canSpawn =
+    Math.random() < 0.02 &&
+    (this.obstacles.length === 0 ||
+     this.obstacles[this.obstacles.length - 1].x < this.width - 400); // tweak gap
+
+  if (canSpawn) {
+    const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
+    // small +5 pushes it down so it sits right on the floor sprite
+    this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 5));
+  }
+
+  // move/draw and check collisions
+  this.obstacles.forEach(o => {
+    o.update(this.speed, delta);
+    o.draw();
+    if (this.checkCollision(this.trex.getBounds(), o.getBounds())) {
+      this.end();
+    }
+  });
+
+  // cull off-screen
+  this.obstacles = this.obstacles.filter(o => o.x + o.type.width > 0);
 }
 
-    this.obstacles.forEach(o => {
-      o.update(this.speed, delta);
-      o.draw();
-      if (this.checkCollision(this.trex.getBounds(), o.getBounds())) {
-        this.end();
-      }
-    });
-    this.obstacles = this.obstacles.filter(o => o.x + o.type.width > 0);
-  }
 
   checkCollision(r, o) {
     return !(r.x > o.x + o.width || r.x + r.width < o.x || r.y > o.y + o.height || r.y + r.height < o.y);
