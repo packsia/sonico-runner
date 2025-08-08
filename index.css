@@ -38,12 +38,15 @@ html, body {
   border-radius: 6px;
 }
 
+/* Replace your current #runnerGif block with this */
 #runnerGif{
   position:absolute;
-  width:100px;      /* TrexConfig.WIDTH  */
-  height:100px;     /* TrexConfig.HEIGHT */
+  left:0; top:0;            /* (0,0) is canvas top-left */
+  height: 100px;            /* match TrexConfig.HEIGHT */
+  width: auto;              /* keep aspect ratio */
   pointer-events:none;
-  image-rendering: pixelated;
+  image-rendering:auto;     /* smoother */
+  transform: translate(0,0);
 }
 
 
