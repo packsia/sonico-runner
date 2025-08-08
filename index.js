@@ -2,8 +2,8 @@
 
 window.onload = function() {
   const canvas = document.getElementById('game');
-  canvas.width  = 800;
-  canvas.height = 500;
+  canvas.width  = 500;
+  canvas.height = 312;
 
   // Match the stage size to the canvas size
   const stage = document.getElementById('stage');
