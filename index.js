@@ -234,11 +234,25 @@ class Game {
     this.clouds = [];
     this.birds = [];
 
+    this.hasEverStarted = false; // <- show "Press Space..." only the first time
+
+    // HUD refs
+    this.startMsg   = document.getElementById('startMsg');
+    this.gameOverEl = document.getElementById('gameOver');
+    this.restartBtn = document.getElementById('restartBtn');
+
+    // restart handlers
+    this.restartBtn?.addEventListener('click', () => this.reset());
+    this.restartBtn?.addEventListener('keydown', (e) => {
+      if (e.code === 'Enter' || e.code === 'Space') this.reset();
+    });
+    
     this.bindEvents();
     this.renderIdleScreen();
 
     this.obstacleCooldown = 200; // ms until next obstacle can spawn
 
+    
   }
 
   bindEvents() {
@@ -263,14 +277,25 @@ class Game {
     this.isPlaying = true;
     this.trex.status = 'RUNNING';
     this.lastTime = performance.now();
-    requestAnimationFrame(this.update.bind(this));
+  // Hide start message the first time only
+  if (!this.hasEverStarted) {
+    this.startMsg && (this.startMsg.style.display = 'none');
+    this.hasEverStarted = true;
   }
 
-  end() {
-    this.isPlaying = false;
-    document.getElementById('mobile-btn').textContent = 'Start';
-    this.renderIdleScreen();
-  }
+  // Hide game-over HUD if it was showing
+  this.gameOverEl && this.gameOverEl.classList.add('hidden');
+
+  requestAnimationFrame(this.update.bind(this));
+}
+
+end() {
+  this.isPlaying = false;
+  document.getElementById('mobile-btn').textContent = 'Start';
+
+  // Show Game Over + restart button
+  this.gameOverEl && this.gameOverEl.classList.remove('hidden');
+}
 
   update(timestamp) {
     const delta = timestamp - this.lastTime;
@@ -354,6 +379,26 @@ updateObstacles(delta) {
     this.trex.draw();
   }
 }
+
+reset() {
+  // Clear state
+  this.obstacles = [];
+  this.clouds = [];
+  this.birds = [];
+  this.speed = 6;
+  this.lastTime = null;
+
+  // Reset player & floor
+  this.trex = new Trex(this.ctx, this.floorY);
+  this.horizon = new Horizon(this.ctx, this.width, this.floorY);
+
+  // Hide Game Over
+  this.gameOverEl && this.gameOverEl.classList.add('hidden');
+
+  // Do NOT show the start message again (per “first time only”)
+  this.renderIdleScreen();
+}
+
 
 /**************
  * INIT
