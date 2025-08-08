@@ -94,9 +94,11 @@ class Cloud {
     this.width = 60;  // adjust to your cloud asset
     this.height = 30;
   }
-  update(delta) {
-    this.x -= this.speed; // speed is already “per frame” for this simple game
-  }
+update(delta) {
+  const pxPerMs = this.speed * 0.06; // tune multiplier
+  this.x -= pxPerMs * (delta || 16);
+}
+
   draw() {
     this.ctx.drawImage(IMG.cloud, this.x, this.y, this.width, this.height);
   }
@@ -221,16 +223,17 @@ class Game {
     if (this.isPlaying) requestAnimationFrame(this.update.bind(this));
   }
 
-    updateClouds(deltaTime) {
-        if (Math.random() < 0.005) {
-            this.clouds.push(new Cloud(this.ctx, this.dimensions.WIDTH, Math.random() * 50));
-        }
-        this.clouds.forEach(cloud => {
-            cloud.update(this.speed / 2);
-            cloud.draw();
-        });
-        this.clouds = this.clouds.filter(cloud => cloud.xPos + CloudConfig.WIDTH > 0);
-    }
+updateClouds(delta) {
+  // Spawn occasionally; cap total clouds
+  if (Math.random() < 0.01 && this.clouds.length < 6) {
+    this.clouds.push(new Cloud(this.ctx, this.width));
+  }
+
+  // Move & cull
+  this.clouds.forEach(c => c.update(delta)); // delta is ignored in Cloud, but fine to pass
+  this.clouds = this.clouds.filter(c => c.isVisible());
+}
+
   
   updateObstacles(delta) {
     if (Math.random() < 0.02) {
