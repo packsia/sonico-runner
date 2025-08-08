@@ -1,55 +1,61 @@
-html, body {
+/* Center the stage on the page (optional) */
+body {
   margin: 0;
-  padding: 0;
-  height: 100%;
-  background: #f7f7f7;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  place-items: start center; /* top-center like your screenshot */
+  background: transparent;
 }
 
-canvas {
-  background: #fff;
-  border: 2px solid #000;
+/* The stage is the same size as the canvas and is the HUD’s positioning context */
+#stage {
+  position: relative;
+  display: inline-block;
+  line-height: 0; /* removes stray gaps */
 }
 
-/* Make the canvas a positioning context */
-canvas { position: relative; }
+/* Make sure the canvas itself doesn’t stretch */
+#game { display: block; background: transparent; }
 
-/* HUD sits centered on top of the canvas */
+/* HUD fills the stage (not the whole page) */
 #hud {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  pointer-events: none; /* HUD won't steal clicks except the button */
+  pointer-events: none; /* clicks pass through except where we re-enable */
 }
 
-/* Start text */
+/* Start message */
 #startMsg {
   font-family: sans-serif;
   font-size: 18px;
-  color: #000; /* pick what works on your background */
-  background: rgba(255,255,255,0.6);
+  color: #7d1717;
+  background: rgba(255,255,255,0.7);
   padding: 8px 14px;
   border-radius: 6px;
-  pointer-events: none;
 }
 
-/* Game over block: image + restart button stacked */
+/* Game over stack */
 #gameOver {
   display: grid;
   gap: 10px;
   justify-items: center;
 }
 
+/* Keep images reasonable relative to canvas */
+#gameOverImg {
+  max-width: 60%;
+  height: auto;
+}
+
 #restartBtn {
-  width: 44px; height: 44px; /* tweak for your asset */
+  width: 64px;  /* adjust if you like */
+  height: 64px;
   cursor: pointer;
   pointer-events: auto; /* clickable */
 }
 
 .hidden { display: none; }
 
-/* Mobile: keep using your existing rule that hides the "Press Space..." text */
-@media (max-width: 768px) { #startMsg { display:none; } }
+/* Mobile: hide the spacebar hint */
+@media (max-width: 768px) { #startMsg { display: none; } }
