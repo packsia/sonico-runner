@@ -38,14 +38,14 @@ const WORLD = {
   FLOOR_HEIGHT: 20,
   BOTTOM_PAD: 10
 };
-const GROUND_LIFT = 4; // tiny gap so sprites sit just above the floor
+const GROUND_LIFT = 1; // tiny gap so sprites sit just above the floor
 
 const TrexConfig = {
   WIDTH: 78,
   HEIGHT: 88,
   X: 50,
-  JUMP_VELOCITY: -12,
-  GRAVITY: 0.55
+  JUMP_VELOCITY: -10,
+  GRAVITY: 0.2
 };
 
 const ObstacleTypes = [
@@ -236,6 +236,9 @@ class Game {
 
     this.bindEvents();
     this.renderIdleScreen();
+
+    this.obstacleCooldown = 0; // ms until next obstacle can spawn
+
   }
 
   bindEvents() {
@@ -313,11 +316,16 @@ updateBirds(delta) {
   this.birds = this.birds.filter(b => b.isVisible());
 }
   
-  updateObstacles(delta) {
-    if (Math.random() < 0.02) {
-      const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY));
-    }
+// Only spawn if random chance AND last obstacle is far enough away
+if (
+  Math.random() < 0.02 &&
+  (this.obstacles.length === 0 || 
+   this.obstacles[this.obstacles.length - 1].x < this.width - 200) // 200px gap
+) {
+  const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
+  this.obstacles.push(new Obstacle(this.ctx, type, this.floorY));
+}
+
     this.obstacles.forEach(o => {
       o.update(this.speed, delta);
       o.draw();
