@@ -240,6 +240,7 @@ class Game {
 
     this.trex = new Trex(this.ctx, this.floorY);
     this.horizon = new Horizon(this.ctx, this.width, this.floorY);
+    this.runnerGif = document.getElementById('runnerGif');
 
     this.obstacles = [];
     this.speed = 6;
@@ -257,10 +258,10 @@ class Game {
     this.restartBtn = document.getElementById('restartBtn');
 
     // restart handlers
-    this.restartBtn?.addEventListener('click', () => this.reset());
+    this.restartBtn?.addEventListener('click', () => this.resetAndStart());
     this.restartBtn?.addEventListener('keydown', (e) => {
-      if (e.code === 'Enter' || e.code === 'Space') this.reset();
-    });
+    if (e.code === 'Enter' || e.code === 'Space') this.resetAndStart();
+  });
     
     this.bindEvents();
     this.renderIdleScreen();
@@ -269,23 +270,21 @@ class Game {
   }
 
   
-  bindEvents() {
-    document.addEventListener('keydown', e => {
-      if (e.code === 'Space') {
-        if (!this.isPlaying) this.start();
-        else this.trex.startJump();
-      }
-    });
-    const mobileBtn = document.getElementById('mobile-btn');
-    mobileBtn.addEventListener('click', () => {
-      if (!this.isPlaying) {
-        this.start();
-        mobileBtn.textContent = 'Jump';
-      } else {
-        this.trex.startJump();
-      }
-    });
-  }
+bindEvents() {
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space') {
+      if (!this.isPlaying) return;       // <-- ignore when not playing
+      this.trex.startJump();
+    }
+  });
+
+  const mobileBtn = document.getElementById('mobile-btn');
+  mobileBtn.addEventListener('click', () => {
+    if (!this.isPlaying) return;         // same rule on mobile
+    this.trex.startJump();
+  });
+}
+
 
 // tiny helpers
 hideGameOver() { this.gameOverEl && this.gameOverEl.classList.add('hidden'); }
@@ -333,9 +332,18 @@ end() {
     // obstacles
     this.updateObstacles(delta);
 
+    // show GIF while moving (RUNNING or JUMPING); hide on IDLE
+    const moving = this.trex.status === 'RUNNING' || this.trex.status === 'JUMPING';
+    if (moving) {
+      this.runnerGif?.classList.remove('hidden');
+      this.runnerGif.style.transform = `translate(${this.trex.x}px, ${this.trex.y}px)`;
+    } else {
+      this.runnerGif?.classList.add('hidden');
+    }
+    
     // player
     this.trex.update();
-    this.trex.draw();
+    if (!moving) this.trex.draw();
 
     if (this.isPlaying) requestAnimationFrame(this.update.bind(this));
   }
@@ -391,10 +399,16 @@ updateObstacles(delta) {
     this.ctx.clearRect(0, 0, this.width, this.height);
     this.horizon.draw();
     this.trex.status = 'IDLE';
+    this.runnerGif?.classList.add('hidden'); 
     this.trex.draw();
   }
 
-
+// reset state and immediately start
+resetAndStart() {
+  this.reset();    // clear state & draw idle
+  this.start();    // immediately play
+}
+  
 reset() {
   // Clear state
   this.obstacles = [];
@@ -408,9 +422,7 @@ reset() {
   this.horizon = new Horizon(this.ctx, this.width, this.floorY);
 
   // Hide Game Over
-  this.gameOverEl && this.gameOverEl.classList.add('hidden');
-
-  // Do NOT show the start message again (per “first time only”)
+  this.hideGameOver();  // keep HUD clean
   this.renderIdleScreen();
 }
 }
