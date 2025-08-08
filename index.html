@@ -45,6 +45,17 @@
 <body>
   <div id="message">Press Space to Start</div>
   <canvas id="game"></canvas>
+  
+  <!-- HUD overlay -->
+<div id="hud">
+  <div id="startMsg">Press Space to Start</div>
+
+  <div id="gameOver" class="hidden">
+    <img id="gameOverImg" src="assets/sonico-images/gameover.png" alt="Game Over">
+    <img id="restartBtn" src="assets/sonico-images/restart.png" alt="Restart" tabindex="0">
+  </div>
+</div>
+
   <button id="mobile-btn">Start</button>
 
   <script src="index.js"></script>
