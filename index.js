@@ -67,8 +67,8 @@ const TrexConfig = {
   WIDTH: 100,           // must be a number (not "auto")
   HEIGHT: 100,
   X: 50,
-  JUMP_VELOCITY: -17,   // more negative = higher initial jump
-  GRAVITY: 0.7          // higher = falls faster
+  JUMP_VELOCITY: -16,   // more negative = higher initial jump
+  GRAVITY: 0.5          // higher = falls faster
 };
 
 const ObstacleTypes = [
@@ -405,7 +405,7 @@ class Game {
     const canSpawn =
       Math.random() < 0.02 &&
       (this.obstacles.length === 0 ||
-       this.obstacles[this.obstacles.length - 1].x < this.width - 300);
+       this.obstacles[this.obstacles.length - 1].x < this.width - 350);
 
     if (canSpawn) {
       const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
