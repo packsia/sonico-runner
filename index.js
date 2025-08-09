@@ -61,14 +61,14 @@ const WORLD = {
 const WORLD_SPEED = 500;
 
 // tiny gap so sprites sit just above the floor
-const GROUND_LIFT = -4;
+const GROUND_LIFT = -5;
 
 const TrexConfig = {
   WIDTH: 100,           // must be a number (not "auto")
   HEIGHT: 100,
   X: 50,
-  JUMP_VELOCITY: -16,   // more negative = higher initial jump
-  GRAVITY: 0.8          // higher = falls faster
+  JUMP_VELOCITY: -17,   // more negative = higher initial jump
+  GRAVITY: 0.7          // higher = falls faster
 };
 
 const ObstacleTypes = [
@@ -88,7 +88,7 @@ const ObstacleTypes = [
     images: IMG.palm,
     sizes: [
       { w: 44, h: 65 },
-      { w: 44, h: 63 },
+      { w: 56, h: 80 },
       { w: 35, h: 50 },
       { w: 39, h: 70 }
     ]
