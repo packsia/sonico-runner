@@ -208,16 +208,17 @@ class Bird {
   isVisible() { return this.x + this.width > 0; }
 }
 
+
 class Obstacle {
-  constructor(ctx, type, floorY) {
+  constructor(ctx, type, floorY, spawnX) {
     this.ctx = ctx;
     this.type = type;
 
-    // choose which image we’ll use for THIS obstacle
+    // pick a random variant of this obstacle type
     this.variant = Math.floor(Math.random() * type.images.length);
     this.img = type.images[this.variant];
 
-    // use per-image size if provided; otherwise fall back to type.width/height
+    // size based on the chosen variant
     const sz = (type.sizes && type.sizes[this.variant])
       ? type.sizes[this.variant]
       : { w: type.width, h: type.height };
@@ -225,8 +226,9 @@ class Obstacle {
     this.width  = sz.w;
     this.height = sz.h;
 
-    this.x = ctx.canvas.width;
-    this.y = floorY - this.height - GROUND_LIFT; // sit on the floor
+    // use logical spawn position instead of canvas.width
+    this.x = spawnX;
+    this.y = floorY - this.height - GROUND_LIFT;
   }
 
   update(speedPerSec, dt) {
@@ -241,6 +243,7 @@ class Obstacle {
     return { x: this.x, y: this.y, width: this.width, height: this.height };
   }
 }
+
 
 
 class Horizon {
@@ -273,9 +276,9 @@ class Game {
     this.ctx = canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = true;
 
-    this.width = canvas.width;
-    this.height = canvas.height;
-    this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
+   this.width  = BASE_W;   // logical game width
+   this.height = BASE_H;   // logical game height
+   this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
 
     // player / world
     this.trex = new Trex(this.ctx, this.floorY);
@@ -436,7 +439,7 @@ class Game {
 
     if (canSpawn) {
       const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 0));
+      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 0, this.width));
     }
 
     this.obstacles.forEach(o => {
