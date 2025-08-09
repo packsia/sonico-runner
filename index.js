@@ -72,9 +72,29 @@ const TrexConfig = {
 };
 
 const ObstacleTypes = [
-  { images: IMG.martini, width: 34, height: 45 },
-  { images: IMG.palm,    width: 51, height: 75 }
+  {
+    kind: 'martini',
+    images: IMG.martini,
+    // one size per image (tweak to taste)
+    sizes: [
+      { w: 34, h: 45 },
+      { w: 34, h: 47 },
+      { w: 34, h: 48 },
+      { w: 34, h: 61 }
+    ]
+  },
+  {
+    kind: 'palm',
+    images: IMG.palm,
+    sizes: [
+      { w: 44, h: 65 },
+      { w: 44, h: 63 },
+      { w: 35, h: 50 },
+      { w: 39, h: 70 }
+    ]
+  }
 ];
+
 
 
 /* ======================
@@ -165,29 +185,36 @@ class Obstacle {
   constructor(ctx, type, floorY) {
     this.ctx = ctx;
     this.type = type;
-    this.frame = 0;
-    this.frameTimer = 0;
+
+    // choose which image we’ll use for THIS obstacle
+    this.variant = Math.floor(Math.random() * type.images.length);
+    this.img = type.images[this.variant];
+
+    // use per-image size if provided; otherwise fall back to type.width/height
+    const sz = (type.sizes && type.sizes[this.variant])
+      ? type.sizes[this.variant]
+      : { w: type.width, h: type.height };
+
+    this.width  = sz.w;
+    this.height = sz.h;
+
     this.x = ctx.canvas.width;
-    this.y = floorY - type.height - GROUND_LIFT; // sit on floor
+    this.y = floorY - this.height - GROUND_LIFT; // sit on the floor
   }
+
   update(speedPerSec, dt) {
     this.x -= speedPerSec * dt;
-    if (this.type.frameRate) {
-      this.frameTimer += dt;
-      if (this.frameTimer >= 1 / this.type.frameRate) {
-        this.frame = (this.frame + 1) % this.type.images.length;
-        this.frameTimer = 0;
-      }
-    }
   }
+
   draw() {
-    const img = this.type.images[this.frame % this.type.images.length];
-    this.ctx.drawImage(img, this.x, this.y, this.type.width, this.type.height);
+    this.ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
   }
+
   getBounds() {
-    return { x: this.x, y: this.y, width: this.type.width, height: this.type.height };
+    return { x: this.x, y: this.y, width: this.width, height: this.height };
   }
 }
+
 
 class Horizon {
   constructor(ctx, w, floorY) {
@@ -391,7 +418,7 @@ class Game {
       if (this.checkCollision(this.trex.getBounds(), o.getBounds())) this.end();
     });
 
-    this.obstacles = this.obstacles.filter(o => o.x + o.type.width > 0);
+      this.obstacles = this.obstacles.filter(o => o.x + o.width > 0);
   }
 
   checkCollision(r, o) {
