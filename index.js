@@ -1,20 +1,47 @@
 'use strict';
 
+const BASE_W = 800;
+const BASE_H = 500;
+
 /* ======================
    BOOT
 ====================== */
+
 window.addEventListener('load', () => {
   const canvas = document.getElementById('game');
-  canvas.width  = 800;
-  canvas.height = 500;
+  const stage  = document.getElementById('stage');
+  const ctx    = canvas.getContext('2d');
 
-  // Match the stage size to the canvas size so HUD aligns
-  const stage = document.getElementById('stage');
-  stage.style.width  = canvas.width + 'px';
-  stage.style.height = canvas.height + 'px';
+  function fit() {
+    const dpr = window.devicePixelRatio || 1;
 
-  new Game(canvas);
+    // 1) keep the internal “world” fixed at 800×500
+    canvas.width  = Math.round(BASE_W * dpr);
+    canvas.height = Math.round(BASE_H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);  // draw in logical px
+
+    // 2) keep the stage at base size, then scale it to screen
+    stage.style.width  = BASE_W + 'px';
+    stage.style.height = BASE_H + 'px';
+
+    const scale = Math.min(
+      window.innerWidth  / BASE_W,
+      window.innerHeight / BASE_H
+    );
+    stage.style.transform = `scale(${scale})`;
+    stage.dataset.scale = String(scale); // if you ever need it
+  }
+
+  fit();
+  window.addEventListener('resize', fit);
+
+  // set CSS size of the <canvas> to the base (the transform above scales it)
+  canvas.style.width  = BASE_W + 'px';
+  canvas.style.height = BASE_H + 'px';
+
+  new Game(canvas); // your game still assumes 800×500; that’s perfect
 });
+
 
 
 /* ======================
