@@ -166,11 +166,14 @@ class Trex {
 class Cloud {
   constructor(ctx, canvasWidth) {
     this.ctx = ctx;
+    const H = (ctx.canvas.height / (window.devicePixelRatio || 1)); // logical height
+
     this.x = canvasWidth + Math.random() * 200;
     const skyTop = 10;
-    const skyBottom = Math.max(60, ctx.canvas.height * 0.35);
+    const skyBottom = Math.max(60, H * 0.35);  // ~upper third of the screen
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
-    this.speed = 40 + Math.random() * 40;   // px/sec
+
+    this.speed = 40 + Math.random() * 40;
     this.width = 60;
     this.height = 40;
   }
@@ -182,12 +185,14 @@ class Cloud {
 class Bird {
   constructor(ctx, canvasWidth) {
     this.ctx = ctx;
+    const H = (ctx.canvas.height / (window.devicePixelRatio || 1)); // logical height
+
     this.x = canvasWidth + Math.random() * 200;
     const skyTop = 20;
-    const skyBottom = Math.max(60, ctx.canvas.height * 0.5);
+    const skyBottom = Math.min(H * 0.45, 220);  // keep birds with clouds, well above floor
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
 
-    this.speed = 120 + Math.random() * 60; // px/sec
+    this.speed = 120 + Math.random() * 60;
     this.width = 46;
     this.height = 40;
 
@@ -302,6 +307,12 @@ class Game {
     this.gameOverEl = document.getElementById('gameOver');
     this.restartBtn = document.getElementById('restartBtn');
 
+   this.mobileBtn = document.getElementById('mobile-btn');
+   if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
+     this.mobileBtn?.classList.remove('hidden');
+   }
+
+     
     // hide GO on load (HTML should also have class="hidden")
     this.hideGameOver();
 
