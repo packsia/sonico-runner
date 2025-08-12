@@ -24,10 +24,12 @@ window.addEventListener('load', () => {
     stage.style.width  = BASE_W + 'px';
     stage.style.height = BASE_H + 'px';
 
-    const scale = Math.min(
-      window.innerWidth  / BASE_W,
-      window.innerHeight / BASE_H
-    );
+   const scale = Math.min(
+     1,                              // ← never upscale on desktop
+     window.innerWidth  / BASE_W,
+     window.innerHeight / BASE_H
+   );
+
     stage.style.transform = `scale(${scale})`;
     stage.dataset.scale = String(scale); // if you ever need it
   }
