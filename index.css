@@ -4,8 +4,12 @@ html, body { margin: 0; padding: 0; }
 
 /* Center the stage on the page (optional) */
 html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
   height: 100%;
   display: grid;
+  overflow: hidden;
   place-items: start center; /* top-center like your screenshot */
   background: transparent;
 }
@@ -13,11 +17,18 @@ html, body {
 /* The stage is the same size as the canvas and is the HUD’s positioning context */
 #stage {
   position: relative;
-  display: inline-block;
+  width: 100%;
+  height: 100%;
+  display: grid;
   line-height: 0; /* removes stray gaps */
 }
 #stage { transform-origin: top center; }
 
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 
 /* Make sure the canvas itself doesn’t stretch */
 #game { display: block; background: transparent; }
@@ -62,13 +73,13 @@ html, body {
 
 /* Keep images reasonable relative to canvas */
 #gameOverImg {
-  max-width: 20%;
+  max-width: 30%;
   height: auto;
 }
 
 #restartBtn {
-  width: 37px;  /* adjust if you like */
-  height: 37px;
+  width: 45px;  /* adjust if you like */
+  height: 45px;
   cursor: pointer;
   pointer-events: auto; /* clickable */
 }
