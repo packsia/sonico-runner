@@ -4,6 +4,7 @@ html, body { margin: 0; padding: 0; }
 
 /* Center the stage on the page (optional) */
 html, body {
+  height: 100%;
   display: grid;
   place-items: start center; /* top-center like your screenshot */
   background: transparent;
@@ -15,7 +16,7 @@ html, body {
   display: inline-block;
   line-height: 0; /* removes stray gaps */
 }
-#stage { transform-origin: top left; }
+#stage { transform-origin: top center; }
 
 
 /* Make sure the canvas itself doesn’t stretch */
@@ -82,8 +83,8 @@ html, body {
   display: none;
   pointer-events: auto;
   border: 0;
-  border-radius: 10px;
-  padding: 10px 18px;
+  border-radius: 12px;
+  padding: 12px 18px;
   font: 600 16px/1.1 system-ui, sans-serif;
   background: #7d1717;   /* red */
   color: #fff;           /* white text */
