@@ -1,11 +1,10 @@
 'use strict';
 
-const BASE_W = 800;
-const BASE_H = 500;
-
-/* ======================
-   BOOT
-====================== */
+/* =========================================================
+   SIZING & BOOTSTRAP
+   - Canvas matches #stage CSS size
+   - Internal buffer scaled for DPR
+========================================================= */
 
 window.addEventListener('load', () => {
   const canvas = document.getElementById('game');
@@ -16,56 +15,50 @@ window.addEventListener('load', () => {
     const rect = stage.getBoundingClientRect();
     const dpr  = window.devicePixelRatio || 1;
 
-    // CSS size (what you see)
+    // CSS size (visible)
     canvas.style.width  = rect.width  + 'px';
     canvas.style.height = rect.height + 'px';
 
-    // Internal pixel buffer (for crispness)
+    // Internal buffer (crispness)
     canvas.width  = Math.max(1, Math.round(rect.width  * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
 
     // Draw in CSS pixels
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Tell the game its logical size matches the canvas CSS size
     if (window.__gameInstance) {
       window.__gameInstance.resize(rect.width, rect.height);
     }
   }
 
-  // First layout + on changes
+  // Create the game, then attach observers
+  const game = new Game(canvas);
+  window.__gameInstance = game;
+
   resizeToStage();
   new ResizeObserver(resizeToStage).observe(stage);
   window.addEventListener('orientationchange', resizeToStage);
   window.addEventListener('resize', resizeToStage);
 
-  // Create the game AFTER we can measure the stage
-  const game = new Game(canvas);
-  window.__gameInstance = game; // so resizeToStage can call game.resize()
-
-// Allow parent page to start the game via postMessage
-window.addEventListener('message', (ev) => {
-  if (ev?.data?.type === 'sonico:start') {
-    if (!game.isPlaying && !game.hasEverStarted) game.start();
-  }
-   
-  // Make keyboard work immediately inside an iframe
-  // 1) focus the canvas once the user moves mouse/touches anywhere in the iframe
-  function primeFocus() { canvas.focus({preventScroll:true}); }
-  ['pointerdown','pointerenter','touchstart'].forEach(ev =>
-    window.addEventListener(ev, primeFocus, { once:true, passive:true })
+  // Prime focus so keyboard works without clicking inside the iframe
+  function primeFocus() { canvas.focus({ preventScroll: true }); }
+  ['pointerdown','pointerenter','touchstart'].forEach(t =>
+    window.addEventListener(t, primeFocus, { once: true, passive: true })
   );
+  setTimeout(primeFocus, 0);
 
-  // 2) also try once right away (some browsers allow it)
-  setTimeout(() => canvas.focus({preventScroll:true}), 0);
+  // Allow parent page (Squarespace) to trigger start
+  window.addEventListener('message', (ev) => {
+    if (ev?.data?.type === 'sonico:start') {
+      if (!game.isPlaying && !game.hasEverStarted) game.start();
+    }
+  });
 });
 
-
-
-
-/* ======================
+/* =========================================================
    ASSETS
-====================== */
+========================================================= */
+
 function loadImage(src) {
   const img = new Image();
   img.src = src;
@@ -94,34 +87,26 @@ const IMG = {
   restart:  loadImage('assets/sonico-images/restart.png')
 };
 
-
-/* ======================
+/* =========================================================
    CONFIG
-====================== */
-const WORLD = {
-  FLOOR_HEIGHT: 10,
-  BOTTOM_PAD: 10
-};
+========================================================= */
 
-// Scroll speed (pixels / second)
-const WORLD_SPEED = 500;
-
-// tiny gap so sprites sit just above the floor
-const GROUND_LIFT = -5;
+const WORLD = { FLOOR_HEIGHT: 10, BOTTOM_PAD: 10 };
+const WORLD_SPEED = 500;   // px/sec
+const GROUND_LIFT = -5;    // small negative = closer to the floor
 
 const TrexConfig = {
-  WIDTH: 100,           // must be a number (not "auto")
+  WIDTH: 100,
   HEIGHT: 100,
   X: 50,
-  JUMP_VELOCITY: -15,   // more negative = higher initial jump
-  GRAVITY: 0.7          // higher = falls faster
+  JUMP_VELOCITY: -15,
+  GRAVITY: 0.7
 };
 
 const ObstacleTypes = [
   {
     kind: 'martini',
     images: IMG.martini,
-    // one size per image (tweak to taste)
     sizes: [
       { w: 34, h: 45 },
       { w: 34, h: 47 },
@@ -141,18 +126,17 @@ const ObstacleTypes = [
   }
 ];
 
-
-
-/* ======================
+/* =========================================================
    CLASSES
-====================== */
+========================================================= */
+
 class Trex {
   constructor(ctx, floorY) {
     this.ctx = ctx;
     this.x = TrexConfig.X;
     this.groundY = floorY - TrexConfig.HEIGHT;
     this.y = this.groundY;
-    this.status = 'IDLE';  // IDLE | RUNNING | JUMPING
+    this.status = 'IDLE'; // IDLE | RUNNING | JUMPING
     this.jumpVel = 0;
   }
   startJump() {
@@ -183,11 +167,11 @@ class Trex {
 class Cloud {
   constructor(ctx, canvasWidth) {
     this.ctx = ctx;
-    const H = (ctx.canvas.height / (window.devicePixelRatio || 1)); // logical height
+    const H = (ctx.canvas.height / (window.devicePixelRatio || 1));
 
     this.x = canvasWidth + Math.random() * 200;
     const skyTop = 10;
-    const skyBottom = Math.max(60, H * 0.35);  // ~upper third of the screen
+    const skyBottom = Math.max(60, H * 0.35);
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
 
     this.speed = 40 + Math.random() * 40;
@@ -202,11 +186,11 @@ class Cloud {
 class Bird {
   constructor(ctx, canvasWidth) {
     this.ctx = ctx;
-    const H = (ctx.canvas.height / (window.devicePixelRatio || 1)); // logical height
+    const H = (ctx.canvas.height / (window.devicePixelRatio || 1));
 
     this.x = canvasWidth + Math.random() * 200;
     const skyTop = 10;
-    const skyBottom = Math.max(60, this.ctx.canvas.height * 0.35); // same band as clouds
+    const skyBottom = Math.max(60, H * 0.35); // same band as clouds
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
 
     this.speed = 120 + Math.random() * 60;
@@ -215,7 +199,7 @@ class Bird {
 
     this.frame = 0;
     this.frameTimer = 0;
-    this.frameRate = 6; // flaps per second
+    this.frameRate = 6;
   }
   update(dt) {
     this.x -= this.speed * dt;
@@ -232,17 +216,14 @@ class Bird {
   isVisible() { return this.x + this.width > 0; }
 }
 
-
 class Obstacle {
   constructor(ctx, type, floorY, spawnX) {
     this.ctx = ctx;
     this.type = type;
 
-    // pick a random variant of this obstacle type
     this.variant = Math.floor(Math.random() * type.images.length);
     this.img = type.images[this.variant];
 
-    // size based on the chosen variant
     const sz = (type.sizes && type.sizes[this.variant])
       ? type.sizes[this.variant]
       : { w: type.width, h: type.height };
@@ -250,25 +231,13 @@ class Obstacle {
     this.width  = sz.w;
     this.height = sz.h;
 
-    // use logical spawn position instead of canvas.width
     this.x = spawnX;
     this.y = floorY - this.height - GROUND_LIFT;
   }
-
-  update(speedPerSec, dt) {
-    this.x -= speedPerSec * dt;
-  }
-
-  draw() {
-    this.ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
-  }
-
-  getBounds() {
-    return { x: this.x, y: this.y, width: this.width, height: this.height };
-  }
+  update(speedPerSec, dt) { this.x -= speedPerSec * dt; }
+  draw() { this.ctx.drawImage(this.img, this.x, this.y, this.width, this.height); }
+  getBounds() { return { x: this.x, y: this.y, width: this.width, height: this.height }; }
 }
-
-
 
 class Horizon {
   constructor(ctx, w, floorY) {
@@ -290,39 +259,26 @@ class Horizon {
   }
 }
 
-
-/* ======================
+/* =========================================================
    GAME
-====================== */
+========================================================= */
+
 class Game {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = true;
 
-   this.width  = BASE_W;   // logical game width
-   this.height = BASE_H;   // logical game height
-   this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
+    // logical size (will be replaced by resize())
+    this.width  = 800;
+    this.height = 500;
+    this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
 
-resize(w, h) {
-  this.width  = w;
-  this.height = h;
-  this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
-
-  // keep runner/floor aligned with new floor
-  this.trex = new Trex(this.ctx, this.floorY);
-  this.horizon = new Horizon(this.ctx, this.width, this.floorY);
-
-  // redraw idle if not playing
-  if (!this.isPlaying) this.renderIdleScreen();
-}
-
-     
-     // player / world
+    // entities
     this.trex = new Trex(this.ctx, this.floorY);
     this.horizon = new Horizon(this.ctx, this.width, this.floorY);
 
-    // decorative overlay GIF (positioned with CSS)
+    // overlay gif
     this.runnerGif = document.getElementById('runnerGif');
 
     // state
@@ -333,21 +289,18 @@ resize(w, h) {
     this.hasEverStarted = false;
     this.lastTime = null;
 
-    // HUD refs
+    // HUD
     this.startMsg   = document.getElementById('startMsg');
     this.gameOverEl = document.getElementById('gameOver');
     this.restartBtn = document.getElementById('restartBtn');
+    this.mobileBtn  = document.getElementById('mobile-btn');
 
-   this.mobileBtn = document.getElementById('mobile-btn');
-   if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
-     this.mobileBtn?.classList.remove('hidden');
-   }
+    if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
+      this.mobileBtn?.classList.remove('hidden');
+    }
 
-     
-    // hide GO on load (HTML should also have class="hidden")
     this.hideGameOver();
 
-    // restart handlers
     this.restartBtn?.addEventListener('click', () => this.resetAndStart());
     this.restartBtn?.addEventListener('keydown', (e) => {
       if (e.code === 'Enter' || e.code === 'Space') this.resetAndStart();
@@ -357,30 +310,37 @@ resize(w, h) {
     this.renderIdleScreen();
   }
 
+  /* ---- public: called by bootstrap on ResizeObserver ---- */
+  resize(w, h) {
+    this.width  = w;
+    this.height = h;
+    this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
+
+    this.trex = new Trex(this.ctx, this.floorY);
+    this.horizon = new Horizon(this.ctx, this.width, this.floorY);
+
+    if (!this.isPlaying) this.renderIdleScreen();
+  }
+
   /* helpers */
   hideGameOver() { this.gameOverEl && this.gameOverEl.classList.add('hidden'); }
   showGameOver() { this.gameOverEl && this.gameOverEl.classList.remove('hidden'); }
 
-bindEvents() {
-  document.addEventListener('keydown', e => {
-    if (e.code !== 'Space') return;
+  bindEvents() {
+    document.addEventListener('keydown', (e) => {
+      if (e.code !== 'Space') return;
+      e.preventDefault(); // prevent page scroll in parent
+      if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
+      if (!this.isPlaying && this.hasEverStarted) return;
+      this.trex.startJump();
+    });
 
-    e.preventDefault(); // <-- stops the parent page from scrolling
-
-    if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
-    if (!this.isPlaying && this.hasEverStarted) return;
-
-    this.trex.startJump();
-  });
-
-  const mobileBtn = document.getElementById('mobile-btn');
-  mobileBtn?.addEventListener('click', () => {
-    if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
-    if (!this.isPlaying) return;
-    this.trex.startJump();
-  });
-}
-
+    this.mobileBtn?.addEventListener('click', () => {
+      if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
+      if (!this.isPlaying) return;
+      this.trex.startJump();
+    });
+  }
 
   start() {
     this.isPlaying = true;
@@ -388,7 +348,7 @@ bindEvents() {
     this.lastTime = performance.now();
 
     if (!this.hasEverStarted) {
-      this.startMsg && (this.startMsg.style.display = 'none');
+      if (this.startMsg) this.startMsg.style.display = 'none';
       this.hasEverStarted = true;
     }
     this.hideGameOver();
@@ -398,18 +358,16 @@ bindEvents() {
   end() {
     this.isPlaying = false;
     this.trex.status = 'IDLE';
-    this.runnerGif?.classList.add('hidden'); // stop the gif
+    this.runnerGif?.classList.add('hidden');
     this.showGameOver();
   }
 
   reset() {
-    // Clear state
     this.obstacles = [];
     this.clouds = [];
     this.birds = [];
     this.lastTime = null;
 
-    // Reset player & floor
     this.trex = new Trex(this.ctx, this.floorY);
     this.horizon = new Horizon(this.ctx, this.width, this.floorY);
 
@@ -420,7 +378,7 @@ bindEvents() {
   resetAndStart() { this.reset(); this.start(); }
 
   update(timestamp) {
-    const dt = (timestamp - this.lastTime) / 1000; // seconds
+    const dt = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
 
     this.ctx.clearRect(0, 0, this.width, this.height);
@@ -439,7 +397,7 @@ bindEvents() {
     // obstacles
     this.updateObstacles(dt);
 
-    // runner GIF overlay (runs only while moving)
+    // gif overlay only when moving
     const moving = this.trex.status === 'RUNNING' || this.trex.status === 'JUMPING';
     if (moving) {
       this.runnerGif?.classList.remove('hidden');
@@ -448,7 +406,7 @@ bindEvents() {
       this.runnerGif?.classList.add('hidden');
     }
 
-    // player physics + fallback draw (idle image under gif)
+    // player
     this.trex.update();
     if (!moving) this.trex.draw();
 
@@ -472,7 +430,6 @@ bindEvents() {
   }
 
   updateObstacles(dt) {
-    // spawn spaced out
     const canSpawn =
       Math.random() < 0.02 &&
       (this.obstacles.length === 0 ||
@@ -480,7 +437,7 @@ bindEvents() {
 
     if (canSpawn) {
       const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 0, this.width));
+      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY, this.width));
     }
 
     this.obstacles.forEach(o => {
@@ -489,11 +446,12 @@ bindEvents() {
       if (this.checkCollision(this.trex.getBounds(), o.getBounds())) this.end();
     });
 
-      this.obstacles = this.obstacles.filter(o => o.x + o.width > 0);
+    this.obstacles = this.obstacles.filter(o => o.x + o.width > 0);
   }
 
   checkCollision(r, o) {
-    return !(r.x > o.x + o.width || r.x + r.width < o.x || r.y > o.y + o.height || r.y + r.height < o.y);
+    return !(r.x > o.x + o.width || r.x + r.width < o.x ||
+             r.y > o.y + o.height || r.y + r.height < o.y);
   }
 
   renderIdleScreen() {
