@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <title>Sonico Runner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="index.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="index.css" />
 </head>
 <body>
   <div id="stage">
-    <canvas id="game" tabindex="0"></canvas>
-    <img id="runnerGif" src="assets/sonico-images/sonicoman.gif" class="hidden" alt="">
+    <canvas id="game" tabindex="0" aria-label="Sonico Runner"></canvas>
 
-    <!-- HUD overlay -->
+    <!-- The animated runner we position with CSS (hidden when idle) -->
+    <img id="runnerGif" src="assets/sonico-images/sonicoman.gif" class="hidden" alt="" />
+
+    <!-- HUD (covers only the stage) -->
     <div id="hud">
       <div id="startMsg">Press Space to Start</div>
 
@@ -20,7 +22,8 @@
         <img id="restartBtn" src="assets/sonico-images/restart.png" alt="Restart" tabindex="0" />
       </div>
 
-      <button id="mobile-btn" class="hidden">Start</button>
+      <!-- Mobile button (shown on touch devices) -->
+      <button id="mobile-btn" class="hidden" type="button">Start</button>
     </div>
   </div>
 
