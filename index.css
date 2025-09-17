@@ -89,7 +89,13 @@ canvas {
 /* Mobile: hide the spacebar hint */
 @media (max-width: 768px) { #startMsg { display: none; } }
 
-/* Hidden on desktop by default */
+/* Make the stage center in its iframe no matter what Squarespace does */
+#stage { margin: 0 auto; }
+
+/* Reset any right-aligned parent styles Squarespace might add */
+html, body { text-align: left; }
+
+/* Mobile button: hidden on desktop */
 #mobile-btn {
   display: none;
   pointer-events: auto;
@@ -102,19 +108,14 @@ canvas {
   box-shadow: 0 2px 10px rgba(0,0,0,.15);
 }
 
-/* Show & center on touch devices */
+/* Show the button ON MOBILE, centered UNDER the game */
 @media (hover: none) and (pointer: coarse) {
-  #hud {
-    grid-template-rows: 1fr auto;   /* space for the button at the bottom */
-  }
   #mobile-btn {
-    display: inline-block;
-    justify-self: center;           /* centered */
-    align-self: end;                 /* bottom of the HUD grid */
-    margin-bottom: 12px;
+    display: block;          /* block makes margin auto work */
+    margin: 12px auto 0;     /* center it below the game */
   }
 }
 
-
-/* add or keep this near the END of index.css */
+/* keep this at the very end */
 .hidden { display: none !important; }
+
