@@ -19,7 +19,7 @@ html, body {
   line-height: 0;
 }
 
-/* Canvas stretches to stage; JS sets pixel buffer for crispness */
+/* Canvas stretches to stage; JS sets backing pixel buffer */
 #game {
   display: block;
   width: 100%;
@@ -32,14 +32,15 @@ html, body {
 #hud {
   position: absolute;
   inset: 0;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
   pointer-events: none;
 }
 
 /* Desktop hint */
 #startMsg {
-  place-self: start center;
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   font-family: system-ui, sans-serif;
   font-size: 18px;
   color: #7d1717;
@@ -60,20 +61,32 @@ html, body {
 }
 
 /* Game over UI */
-#gameOver { display: grid; gap: 20px; justify-items: center; }
+#gameOver {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 20px;
+  justify-items: center;
+  pointer-events: auto;
+}
 #gameOverImg { max-width: 30%; height: auto; }
-#restartBtn  { width: 45px; height: 45px; cursor: pointer; pointer-events: auto; }
+#restartBtn  { width: 45px; height: 45px; cursor: pointer; }
 
 .hidden { display: none !important; }
 
 /* Hide spacebar hint on narrow screens */
 @media (max-width: 768px) { #startMsg { display: none; } }
 
-/* Mobile Start/Jump button
-   - Centered horizontally
-   - Sits comfortably *below* the floor and above iOS bottom bar
-*/
+/* Mobile Start/Jump button — in the bottom band we reserve for UI */
 #mobile-btn {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px)); /* sits in reserved bottom space */
+  z-index: 10;
+
   pointer-events: auto;
   border: 0;
   border-radius: 14px;
@@ -82,19 +95,9 @@ html, body {
   background: #7d1717;
   color: #fff;
   box-shadow: 0 6px 22px rgba(0,0,0,.18);
-
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  /* ~80px above the very bottom, plus iOS safe area if present */
-  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-  z-index: 10;
-
-  /* Hidden on desktop by default; JS will unhide on touch devices */
-  display: none;
 }
 
-/* Only show on touch devices */
+/* Only show on touch devices; JS still controls visibility with .hidden */
 @media (hover:none) and (pointer:coarse){
-  #mobile-btn { display: inline-block !important; }
+  #mobile-btn { display: inline-block; }
 }
