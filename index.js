@@ -1,14 +1,9 @@
 'use strict';
 
-/* =========================================================
-   SIZING & BOOTSTRAP
-   - Canvas matches #stage CSS size
-   - Internal buffer scaled for DPR
-========================================================= */
-
+/* ====== Boot (size-to-container + focus priming + optional postMessage start) ====== */
 window.addEventListener('load', () => {
-  const canvas = document.getElementById('game');
   const stage  = document.getElementById('stage');
+  const canvas = document.getElementById('game');
   const ctx    = canvas.getContext('2d');
 
   function resizeToStage() {
@@ -19,46 +14,53 @@ window.addEventListener('load', () => {
     canvas.style.width  = rect.width  + 'px';
     canvas.style.height = rect.height + 'px';
 
-    // Internal buffer (crispness)
+    // Backing pixel buffer for crispness
     canvas.width  = Math.max(1, Math.round(rect.width  * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
 
     // Draw in CSS pixels
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    if (window.__gameInstance) {
-      window.__gameInstance.resize(rect.width, rect.height);
-    }
+    // Tell the game the new logical size
+    if (window.__game) window.__game.resize(rect.width, rect.height);
   }
 
-  // Create the game, then attach observers
-  const game = new Game(canvas);
-  window.__gameInstance = game;
-
+  // Observe size changes of the stage
   resizeToStage();
   new ResizeObserver(resizeToStage).observe(stage);
   window.addEventListener('orientationchange', resizeToStage);
   window.addEventListener('resize', resizeToStage);
 
-  // Prime focus so keyboard works without clicking inside the iframe
-  function primeFocus() { canvas.focus({ preventScroll: true }); }
-  ['pointerdown','pointerenter','touchstart'].forEach(t =>
-    window.addEventListener(t, primeFocus, { once: true, passive: true })
+  // Create game
+  window.__game = new Game(canvas);
+
+  // Make keyboard work immediately inside an iframe:
+  // – stop Space from scrolling the parent page
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Space') e.preventDefault();
+  }, { passive: false });
+
+  // – focus the canvas on first interaction inside the iframe
+  const primeFocus = () => canvas.focus({ preventScroll: true });
+  ['pointerdown','pointerenter','touchstart'].forEach(ev =>
+    window.addEventListener(ev, primeFocus, { once: true, passive: true })
   );
+  // – and try once immediately (some browsers allow)
   setTimeout(primeFocus, 0);
 
-  // Allow parent page (Squarespace) to trigger start
+  // Optional: allow parent page to start the game (Squarespace embed can send this)
   window.addEventListener('message', (ev) => {
     if (ev?.data?.type === 'sonico:start') {
-      if (!game.isPlaying && !game.hasEverStarted) game.start();
+      if (!window.__game.isPlaying && !window.__game.hasEverStarted) {
+        window.__game.start();
+      }
     }
   });
 });
 
-/* =========================================================
-   ASSETS
-========================================================= */
-
+/* ======================
+   Assets
+====================== */
 function loadImage(src) {
   const img = new Image();
   img.src = src;
@@ -87,13 +89,12 @@ const IMG = {
   restart:  loadImage('assets/sonico-images/restart.png')
 };
 
-/* =========================================================
-   CONFIG
-========================================================= */
-
+/* ======================
+   Config
+====================== */
 const WORLD = { FLOOR_HEIGHT: 10, BOTTOM_PAD: 10 };
 const WORLD_SPEED = 500;   // px/sec
-const GROUND_LIFT = -5;    // small negative = closer to the floor
+const GROUND_LIFT = -5;    // sit a hair below the floor for your line art
 
 const TrexConfig = {
   WIDTH: 100,
@@ -126,17 +127,16 @@ const ObstacleTypes = [
   }
 ];
 
-/* =========================================================
-   CLASSES
-========================================================= */
-
+/* ======================
+   Classes
+====================== */
 class Trex {
   constructor(ctx, floorY) {
     this.ctx = ctx;
     this.x = TrexConfig.X;
     this.groundY = floorY - TrexConfig.HEIGHT;
     this.y = this.groundY;
-    this.status = 'IDLE'; // IDLE | RUNNING | JUMPING
+    this.status = 'IDLE';
     this.jumpVel = 0;
   }
   startJump() {
@@ -167,7 +167,7 @@ class Trex {
 class Cloud {
   constructor(ctx, canvasWidth) {
     this.ctx = ctx;
-    const H = (ctx.canvas.height / (window.devicePixelRatio || 1));
+    const H = this.logicalHeight();
 
     this.x = canvasWidth + Math.random() * 200;
     const skyTop = 10;
@@ -178,6 +178,10 @@ class Cloud {
     this.width = 60;
     this.height = 40;
   }
+  logicalHeight() {
+    const dpr = window.devicePixelRatio || 1;
+    return this.ctx.canvas.height / dpr;
+  }
   update(dt) { this.x -= this.speed * dt; }
   draw() { this.ctx.drawImage(IMG.cloud, this.x, this.y, this.width, this.height); }
   isVisible() { return this.x + this.width > 0; }
@@ -186,11 +190,11 @@ class Cloud {
 class Bird {
   constructor(ctx, canvasWidth) {
     this.ctx = ctx;
-    const H = (ctx.canvas.height / (window.devicePixelRatio || 1));
+    const H = this.logicalHeight();
 
     this.x = canvasWidth + Math.random() * 200;
     const skyTop = 10;
-    const skyBottom = Math.max(60, H * 0.35); // same band as clouds
+    const skyBottom = Math.max(60, H * 0.35);   // same band as clouds
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
 
     this.speed = 120 + Math.random() * 60;
@@ -200,6 +204,10 @@ class Bird {
     this.frame = 0;
     this.frameTimer = 0;
     this.frameRate = 6;
+  }
+  logicalHeight() {
+    const dpr = window.devicePixelRatio || 1;
+    return this.ctx.canvas.height / dpr;
   }
   update(dt) {
     this.x -= this.speed * dt;
@@ -259,17 +267,16 @@ class Horizon {
   }
 }
 
-/* =========================================================
-   GAME
-========================================================= */
-
+/* ======================
+   Game
+====================== */
 class Game {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = true;
 
-    // logical size (will be replaced by resize())
+    // start with some default; real values arrive via resize()
     this.width  = 800;
     this.height = 500;
     this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
@@ -278,8 +285,12 @@ class Game {
     this.trex = new Trex(this.ctx, this.floorY);
     this.horizon = new Horizon(this.ctx, this.width, this.floorY);
 
-    // overlay gif
+    // HUD
     this.runnerGif = document.getElementById('runnerGif');
+    this.startMsg   = document.getElementById('startMsg');
+    this.gameOverEl = document.getElementById('gameOver');
+    this.restartBtn = document.getElementById('restartBtn');
+    this.mobileBtn  = document.getElementById('mobile-btn');
 
     // state
     this.obstacles = [];
@@ -289,18 +300,12 @@ class Game {
     this.hasEverStarted = false;
     this.lastTime = null;
 
-    // HUD
-    this.startMsg   = document.getElementById('startMsg');
-    this.gameOverEl = document.getElementById('gameOver');
-    this.restartBtn = document.getElementById('restartBtn');
-    this.mobileBtn  = document.getElementById('mobile-btn');
-
+    // show mobile button on touch devices
     if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
       this.mobileBtn?.classList.remove('hidden');
     }
 
     this.hideGameOver();
-
     this.restartBtn?.addEventListener('click', () => this.resetAndStart());
     this.restartBtn?.addEventListener('keydown', (e) => {
       if (e.code === 'Enter' || e.code === 'Space') this.resetAndStart();
@@ -310,30 +315,30 @@ class Game {
     this.renderIdleScreen();
   }
 
-  /* ---- public: called by bootstrap on ResizeObserver ---- */
+  /* called by the boot resizeToStage() */
   resize(w, h) {
     this.width  = w;
     this.height = h;
     this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
 
+    // keep floor/player aligned
     this.trex = new Trex(this.ctx, this.floorY);
     this.horizon = new Horizon(this.ctx, this.width, this.floorY);
 
     if (!this.isPlaying) this.renderIdleScreen();
   }
 
-  /* helpers */
   hideGameOver() { this.gameOverEl && this.gameOverEl.classList.add('hidden'); }
   showGameOver() { this.gameOverEl && this.gameOverEl.classList.remove('hidden'); }
 
   bindEvents() {
-    document.addEventListener('keydown', (e) => {
+    window.addEventListener('keydown', e => {
       if (e.code !== 'Space') return;
-      e.preventDefault(); // prevent page scroll in parent
+      e.preventDefault(); // stop parent page scrolling
       if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
       if (!this.isPlaying && this.hasEverStarted) return;
       this.trex.startJump();
-    });
+    }, { passive: false });
 
     this.mobileBtn?.addEventListener('click', () => {
       if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
@@ -377,28 +382,21 @@ class Game {
 
   resetAndStart() { this.reset(); this.start(); }
 
-  update(timestamp) {
-    const dt = (timestamp - this.lastTime) / 1000;
-    this.lastTime = timestamp;
+  update(ts) {
+    const dt = (ts - this.lastTime) / 1000;
+    this.lastTime = ts;
 
     this.ctx.clearRect(0, 0, this.width, this.height);
 
-    // background
-    this.updateClouds(dt);
-    this.clouds.forEach(c => c.draw());
+    this.updateClouds(dt);  this.clouds.forEach(c => c.draw());
+    this.updateBirds(dt);   this.birds.forEach(b => b.draw());
 
-    this.updateBirds(dt);
-    this.birds.forEach(b => b.draw());
-
-    // floor
     this.horizon.update(WORLD_SPEED, dt);
     this.horizon.draw();
 
-    // obstacles
     this.updateObstacles(dt);
 
-    // gif overlay only when moving
-    const moving = this.trex.status === 'RUNNING' || this.trex.status === 'JUMPING';
+    const moving = (this.trex.status === 'RUNNING' || this.trex.status === 'JUMPING');
     if (moving) {
       this.runnerGif?.classList.remove('hidden');
       this.runnerGif.style.transform = `translate(${this.trex.x}px, ${this.trex.y}px)`;
@@ -406,7 +404,6 @@ class Game {
       this.runnerGif?.classList.add('hidden');
     }
 
-    // player
     this.trex.update();
     if (!moving) this.trex.draw();
 
@@ -437,7 +434,7 @@ class Game {
 
     if (canSpawn) {
       const type = ObstacleTypes[Math.floor(Math.random() * ObstacleTypes.length)];
-      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY, this.width));
+      this.obstacles.push(new Obstacle(this.ctx, type, this.floorY + 0, this.width));
     }
 
     this.obstacles.forEach(o => {
@@ -450,8 +447,7 @@ class Game {
   }
 
   checkCollision(r, o) {
-    return !(r.x > o.x + o.width || r.x + r.width < o.x ||
-             r.y > o.y + o.height || r.y + r.height < o.y);
+    return !(r.x > o.x + o.width || r.x + r.width < o.x || r.y > o.y + o.height || r.y + r.height < o.y);
   }
 
   renderIdleScreen() {
