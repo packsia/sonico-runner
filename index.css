@@ -1,4 +1,4 @@
-/* Page & container fill the iframe */
+/* Fill the iframe */
 html, body {
   margin: 0;
   padding: 0;
@@ -10,16 +10,17 @@ html, body {
   overflow: hidden;
 }
 
-/* The stage fills the whole iframe (no transform scaling anymore) */
+/* Stage == full iframe */
 #stage {
   position: relative;
   width: 100%;
   height: 100%;
   display: grid;
   line-height: 0;
+  transform-origin: top center;
 }
 
-/* Canvas always stretches to stage size; JS sets its internal pixel size */
+/* Canvas fills stage; JS manages internal pixel buffer for crispness */
 #game {
   display: block;
   width: 100%;
@@ -28,12 +29,12 @@ html, body {
   outline: none;
 }
 
-/* HUD covers the stage exactly */
+/* HUD covers the stage */
 #hud {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-rows: auto 1fr auto; /* top area / game space / bottom area */
+  grid-template-rows: auto 1fr auto;
   pointer-events: none;
 }
 
@@ -48,35 +49,36 @@ html, body {
   border-radius: 6px;
 }
 
-/* Runner GIF overlay (same as before) */
+/* Running GIF overlay */
 #runnerGif {
   position: absolute;
   left: 0; top: 0;
-  height: 100px;   /* match TrexConfig.HEIGHT */
+  height: 100px;               /* match TrexConfig.HEIGHT */
   width: auto;
   pointer-events: none;
   image-rendering: auto;
   transform: translate(0,0);
 }
 
-/* Game over stack */
+/* Game Over */
 #gameOver { display: grid; gap: 20px; justify-items: center; }
 #gameOverImg { max-width: 30%; height: auto; }
 #restartBtn { width: 45px; height: 45px; cursor: pointer; pointer-events: auto; }
 
 .hidden { display: none !important; }
 
-/* Mobile: hide the spacebar hint */
+/* Hide spacebar hint on narrow screens */
 @media (max-width: 768px) { #startMsg { display: none; } }
 
-/* Mobile Start/Jump button
-   It’s in the HUD’s **bottom row**, so it renders UNDER the floor line visually. */
+/* Mobile Start/Jump button – sits under the floor */
 #mobile-btn {
-  display: none;                  /* hidden on desktop */
-  justify-self: center;           /* centered horizontally */
-  align-self: start;              /* sits at top of the bottom row -> right under gameplay area */
-  margin-top: 14px;               /* little gap below the floor */
+  display: none;               /* shown via JS only on touch devices */
   pointer-events: auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 14px;                /* place under floor line */
+  z-index: 10;
 
   border: 0;
   border-radius: 12px;
@@ -84,18 +86,4 @@ html, body {
   font: 600 16px/1.1 system-ui, sans-serif;
   background: #7d1717; color: #fff;
   box-shadow: 0 2px 10px rgba(0,0,0,.15);
-}
-
-/* Touch devices: show and position under the floor */
-@media (hover:none) and (pointer:coarse){
-  #mobile-btn{
-    display:block;
-    position:absolute;
-    left:50%;
-    transform:translateX(-50%);
-    bottom:14px;           /* sits under the floor line */
-    z-index:10;
-  }
-  #hud{ pointer-events:none; }   /* HUD doesn’t block touches */
-  #mobile-btn{ pointer-events:auto; }
 }
