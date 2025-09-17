@@ -10,10 +10,8 @@
   <div id="stage">
     <canvas id="game" tabindex="0" aria-label="Sonico Runner"></canvas>
 
-    <!-- The animated runner we position with CSS (hidden when idle) -->
     <img id="runnerGif" src="assets/sonico-images/sonicoman.gif" class="hidden" alt="" />
 
-    <!-- HUD (covers only the stage) -->
     <div id="hud">
       <div id="startMsg">Press Space to Start</div>
 
@@ -22,7 +20,7 @@
         <img id="restartBtn" src="assets/sonico-images/restart.png" alt="Restart" tabindex="0" />
       </div>
 
-      <!-- Mobile button (shown on touch devices) -->
+      <!-- Mobile button (shown on touch devices). Text controlled by JS. -->
       <button id="mobile-btn" class="hidden" type="button">Start</button>
     </div>
   </div>
