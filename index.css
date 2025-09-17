@@ -19,7 +19,7 @@ html, body {
   line-height: 0;
 }
 
-/* Canvas stretches to stage; JS sets backing pixel size */
+/* Canvas stretches to stage; JS sets pixel buffer for crispness */
 #game {
   display: block;
   width: 100%;
@@ -28,7 +28,7 @@ html, body {
   outline: none;
 }
 
-/* HUD lays on top of the stage only */
+/* HUD sits over the stage */
 #hud {
   position: absolute;
   inset: 0;
@@ -37,7 +37,7 @@ html, body {
   pointer-events: none;
 }
 
-/* Start hint */
+/* Desktop hint */
 #startMsg {
   place-self: start center;
   font-family: system-ui, sans-serif;
@@ -48,12 +48,11 @@ html, body {
   border-radius: 6px;
 }
 
-/* Animated runner overlay */
+/* Runner GIF overlay */
 #runnerGif {
   position: absolute;
-  left: 0;
-  top: 0;
-  height: 100px;   /* matches TrexConfig.HEIGHT in JS */
+  left: 0; top: 0;
+  height: 100px;   /* matches TrexConfig.HEIGHT */
   width: auto;
   pointer-events: none;
   image-rendering: auto;
@@ -70,26 +69,32 @@ html, body {
 /* Hide spacebar hint on narrow screens */
 @media (max-width: 768px) { #startMsg { display: none; } }
 
-/* Mobile Start/Jump button — under the playfield / near the floor */
+/* Mobile Start/Jump button
+   - Centered horizontally
+   - Sits comfortably *below* the floor and above iOS bottom bar
+*/
 #mobile-btn {
   pointer-events: auto;
   border: 0;
-  border-radius: 12px;
-  padding: 12px 18px;
-  font: 600 16px/1.1 system-ui, sans-serif;
+  border-radius: 14px;
+  padding: 14px 22px;
+  font: 700 18px/1 system-ui, sans-serif;
   background: #7d1717;
   color: #fff;
-  box-shadow: 0 2px 10px rgba(0,0,0,.15);
+  box-shadow: 0 6px 22px rgba(0,0,0,.18);
 
-  /* absolute bottom center so it's always visible below the floor */
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 14px;
+  /* ~80px above the very bottom, plus iOS safe area if present */
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   z-index: 10;
+
+  /* Hidden on desktop by default; JS will unhide on touch devices */
+  display: none;
 }
 
-/* Only show the button on touch devices */
+/* Only show on touch devices */
 @media (hover:none) and (pointer:coarse){
   #mobile-btn { display: inline-block !important; }
 }
