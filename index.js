@@ -91,8 +91,8 @@ const TrexConfig = {
   WIDTH: 100,
   HEIGHT: 100,
   X: 50,
-  JUMP_VELOCITY: -15,
-  GRAVITY: 1.0
+  JUMP_VELOCITY: -16,
+  GRAVITY: 1.1
 };
 
 const ObstacleTypes = [
