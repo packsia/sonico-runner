@@ -1,6 +1,6 @@
 'use strict';
 
-/* ====== Boot: size-to-container + focus priming + optional postMessage start ====== */
+/* ====== Boot: size-to-container + focus priming ====== */
 window.addEventListener('load', () => {
   const stage  = document.getElementById('stage');
   const canvas = document.getElementById('game');
@@ -14,7 +14,7 @@ window.addEventListener('load', () => {
     canvas.style.width  = rect.width  + 'px';
     canvas.style.height = rect.height + 'px';
 
-    // Backing pixel buffer for crispness
+    // Backing pixel buffer
     canvas.width  = Math.max(1, Math.round(rect.width  * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
 
@@ -44,15 +44,6 @@ window.addEventListener('load', () => {
     window.addEventListener(ev, primeFocus, { once: true, passive: true })
   );
   setTimeout(primeFocus, 0);
-
-  // Optional: let parent page start the game
-  window.addEventListener('message', (ev) => {
-    if (ev?.data?.type === 'sonico:start') {
-      if (!window.__game.isPlaying && !window.__game.hasEverStarted) {
-        window.__game.start();
-      }
-    }
-  });
 });
 
 /* ======================
@@ -92,6 +83,9 @@ const IMG = {
 const WORLD = { FLOOR_HEIGHT: 10, BOTTOM_PAD: 10 };
 const WORLD_SPEED = 500;   // px/sec
 const GROUND_LIFT = -5;
+
+// Reserve this much *visual* space at the bottom for UI (button area)
+const BOTTOM_UI_GAP = 120; // tweak this to move the whole game further up/down
 
 const TrexConfig = {
   WIDTH: 100,
@@ -275,7 +269,10 @@ class Game {
 
     this.width  = 800;  // replaced on first resize()
     this.height = 500;
-    this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
+
+    // reserve bottom UI gap and compute floor
+    this.bottomGap = BOTTOM_UI_GAP;
+    this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD - this.bottomGap;
 
     // entities
     this.trex = new Trex(this.ctx, this.floorY);
@@ -296,12 +293,9 @@ class Game {
     this.hasEverStarted = false;
     this.lastTime = null;
 
-    // reveal the mobile button on touch devices with "Start" label
+    // touch detection for showing the button
     this.isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-    if (this.isTouch) {
-      this.mobileBtn?.classList.remove('hidden');
-      if (this.mobileBtn) this.mobileBtn.textContent = 'Start';
-    }
+    if (this.isTouch) this.showMobileBtn('Start');  // visible only on touch
 
     this.hideGameOver();
     this.restartBtn?.addEventListener('click', () => this.resetAndStart());
@@ -313,11 +307,24 @@ class Game {
     this.renderIdleScreen();
   }
 
+  /* helpers to control the mobile button hard (no CSS race) */
+  showMobileBtn(text) {
+    if (!this.mobileBtn) return;
+    this.mobileBtn.textContent = text;
+    this.mobileBtn.classList.remove('hidden');
+    this.mobileBtn.style.display = 'inline-block';
+  }
+  hideMobileBtn() {
+    if (!this.mobileBtn) return;
+    this.mobileBtn.classList.add('hidden');
+    this.mobileBtn.style.display = 'none';
+  }
+
   /* called by the boot resizeToStage() */
   resize(w, h) {
     this.width  = w;
     this.height = h;
-    this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
+    this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD - this.bottomGap;
 
     // keep floor/player aligned
     this.trex = new Trex(this.ctx, this.floorY);
@@ -356,10 +363,7 @@ class Game {
     }
 
     // Mobile button becomes "Jump!" while playing
-    if (this.isTouch && this.mobileBtn) {
-      this.mobileBtn.textContent = 'Jump!';
-      this.mobileBtn.classList.remove('hidden');
-    }
+    if (this.isTouch) this.showMobileBtn('Jump!');
 
     this.hideGameOver();
     requestAnimationFrame(this.update.bind(this));
@@ -369,8 +373,10 @@ class Game {
     this.isPlaying = false;
     this.trex.status = 'IDLE';
     this.runnerGif?.classList.add('hidden');
+
     // Hide the mobile button on Game Over
-    if (this.isTouch) this.mobileBtn?.classList.add('hidden');
+    if (this.isTouch) this.hideMobileBtn();
+
     this.showGameOver();
   }
 
@@ -386,12 +392,8 @@ class Game {
     this.hideGameOver();
     this.renderIdleScreen();
 
-    // After a reset (e.g., clicking restart), we wait for start() to show "Jump!"
-    if (this.isTouch) {
-      this.mobileBtn?.classList.remove('hidden');
-      if (this.mobileBtn) this.mobileBtn.textContent = this.hasEverStarted ? 'Start' : 'Start';
-      // ^ Keeping "Start" when idle; start() flips it to "Jump!" as soon as we play
-    }
+    // Idle state after reset: show Start on touch
+    if (this.isTouch) this.showMobileBtn('Start');
   }
 
   resetAndStart() { this.reset(); this.start(); }
