@@ -44,7 +44,7 @@ html, body {
   font-family: system-ui, sans-serif;
   font-size: 18px;
   color: #7d1717;
-  background: rgba(255,255,255,0.75);
+  background: transparent;
   padding: 8px 14px;
   border-radius: 6px;
 }
