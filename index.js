@@ -1,6 +1,6 @@
 'use strict';
 
-/* ====== Boot (size-to-container + focus priming + optional postMessage start) ====== */
+/* ====== Boot: size-to-container + focus priming + optional postMessage start ====== */
 window.addEventListener('load', () => {
   const stage  = document.getElementById('stage');
   const canvas = document.getElementById('game');
@@ -21,11 +21,10 @@ window.addEventListener('load', () => {
     // Draw in CSS pixels
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Tell the game the new logical size
+    // Inform the game of logical size
     if (window.__game) window.__game.resize(rect.width, rect.height);
   }
 
-  // Observe size changes of the stage
   resizeToStage();
   new ResizeObserver(resizeToStage).observe(stage);
   window.addEventListener('orientationchange', resizeToStage);
@@ -34,21 +33,19 @@ window.addEventListener('load', () => {
   // Create game
   window.__game = new Game(canvas);
 
-  // Make keyboard work immediately inside an iframe:
-  // – stop Space from scrolling the parent page
+  // Prevent Space from scrolling parent page (when embedded)
   window.addEventListener('keydown', e => {
     if (e.code === 'Space') e.preventDefault();
   }, { passive: false });
 
-  // – focus the canvas on first interaction inside the iframe
+  // Make keyboard work immediately inside an iframe: focus on first interaction
   const primeFocus = () => canvas.focus({ preventScroll: true });
   ['pointerdown','pointerenter','touchstart'].forEach(ev =>
     window.addEventListener(ev, primeFocus, { once: true, passive: true })
   );
-  // – and try once immediately (some browsers allow)
   setTimeout(primeFocus, 0);
 
-  // Optional: allow parent page to start the game (Squarespace embed can send this)
+  // Optional: let parent page start the game
   window.addEventListener('message', (ev) => {
     if (ev?.data?.type === 'sonico:start') {
       if (!window.__game.isPlaying && !window.__game.hasEverStarted) {
@@ -94,7 +91,7 @@ const IMG = {
 ====================== */
 const WORLD = { FLOOR_HEIGHT: 10, BOTTOM_PAD: 10 };
 const WORLD_SPEED = 500;   // px/sec
-const GROUND_LIFT = -5;    // sit a hair below the floor for your line art
+const GROUND_LIFT = -5;
 
 const TrexConfig = {
   WIDTH: 100,
@@ -276,8 +273,7 @@ class Game {
     this.ctx = canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = true;
 
-    // start with some default; real values arrive via resize()
-    this.width  = 800;
+    this.width  = 800;  // replaced on first resize()
     this.height = 500;
     this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
 
@@ -300,9 +296,11 @@ class Game {
     this.hasEverStarted = false;
     this.lastTime = null;
 
-    // show mobile button on touch devices
-    if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
+    // reveal the mobile button on touch devices with "Start" label
+    this.isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    if (this.isTouch) {
       this.mobileBtn?.classList.remove('hidden');
+      if (this.mobileBtn) this.mobileBtn.textContent = 'Start';
     }
 
     this.hideGameOver();
@@ -356,6 +354,13 @@ class Game {
       if (this.startMsg) this.startMsg.style.display = 'none';
       this.hasEverStarted = true;
     }
+
+    // Mobile button becomes "Jump!" while playing
+    if (this.isTouch && this.mobileBtn) {
+      this.mobileBtn.textContent = 'Jump!';
+      this.mobileBtn.classList.remove('hidden');
+    }
+
     this.hideGameOver();
     requestAnimationFrame(this.update.bind(this));
   }
@@ -364,6 +369,8 @@ class Game {
     this.isPlaying = false;
     this.trex.status = 'IDLE';
     this.runnerGif?.classList.add('hidden');
+    // Hide the mobile button on Game Over
+    if (this.isTouch) this.mobileBtn?.classList.add('hidden');
     this.showGameOver();
   }
 
@@ -378,6 +385,13 @@ class Game {
 
     this.hideGameOver();
     this.renderIdleScreen();
+
+    // After a reset (e.g., clicking restart), we wait for start() to show "Jump!"
+    if (this.isTouch) {
+      this.mobileBtn?.classList.remove('hidden');
+      if (this.mobileBtn) this.mobileBtn.textContent = this.hasEverStarted ? 'Start' : 'Start';
+      // ^ Keeping "Start" when idle; start() flips it to "Jump!" as soon as we play
+    }
   }
 
   resetAndStart() { this.reset(); this.start(); }
