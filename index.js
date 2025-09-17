@@ -43,6 +43,12 @@ window.addEventListener('load', () => {
   const game = new Game(canvas);
   window.__gameInstance = game; // so resizeToStage can call game.resize()
 
+// Allow parent page to start the game via postMessage
+window.addEventListener('message', (ev) => {
+  if (ev?.data?.type === 'sonico:start') {
+    if (!game.isPlaying && !game.hasEverStarted) game.start();
+  }
+   
   // Make keyboard work immediately inside an iframe
   // 1) focus the canvas once the user moves mouse/touches anywhere in the iframe
   function primeFocus() { canvas.focus({preventScroll:true}); }
