@@ -12,40 +12,48 @@ window.addEventListener('load', () => {
   const stage  = document.getElementById('stage');
   const ctx    = canvas.getContext('2d');
 
-  function fit() {
-    const dpr = window.devicePixelRatio || 1;
+  function resizeToStage() {
+    const rect = stage.getBoundingClientRect();
+    const dpr  = window.devicePixelRatio || 1;
 
-    // 1) keep the internal “world” fixed at 800×500
-    canvas.width  = Math.round(BASE_W * dpr);
-    canvas.height = Math.round(BASE_H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);  // draw in logical px
+    // CSS size (what you see)
+    canvas.style.width  = rect.width  + 'px';
+    canvas.style.height = rect.height + 'px';
 
-    // 2) keep the stage at base size, then scale it to screen
-    stage.style.width  = BASE_W + 'px';
-    stage.style.height = BASE_H + 'px';
+    // Internal pixel buffer (for crispness)
+    canvas.width  = Math.max(1, Math.round(rect.width  * dpr));
+    canvas.height = Math.max(1, Math.round(rect.height * dpr));
 
-const stageW = stage.clientWidth;
-const stageH = stage.clientHeight;
-     
-   const scale = Math.min(
-     1,                              // ← never upscale on desktop
-     window.innerWidth  / BASE_W,
-     window.innerHeight / BASE_H
-   );
+    // Draw in CSS pixels
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    stage.style.transform = `scale(${scale})`;
-    stage.dataset.scale = String(scale); // if you ever need it
+    // Tell the game its logical size matches the canvas CSS size
+    if (window.__gameInstance) {
+      window.__gameInstance.resize(rect.width, rect.height);
+    }
   }
 
-  fit();
-  window.addEventListener('resize', fit);
+  // First layout + on changes
+  resizeToStage();
+  new ResizeObserver(resizeToStage).observe(stage);
+  window.addEventListener('orientationchange', resizeToStage);
+  window.addEventListener('resize', resizeToStage);
 
-  // set CSS size of the <canvas> to the base (the transform above scales it)
-  canvas.style.width  = BASE_W + 'px';
-  canvas.style.height = BASE_H + 'px';
+  // Create the game AFTER we can measure the stage
+  const game = new Game(canvas);
+  window.__gameInstance = game; // so resizeToStage can call game.resize()
 
-  new Game(canvas); // your game still assumes 800×500; that’s perfect
+  // Make keyboard work immediately inside an iframe
+  // 1) focus the canvas once the user moves mouse/touches anywhere in the iframe
+  function primeFocus() { canvas.focus({preventScroll:true}); }
+  ['pointerdown','pointerenter','touchstart'].forEach(ev =>
+    window.addEventListener(ev, primeFocus, { once:true, passive:true })
+  );
+
+  // 2) also try once right away (some browsers allow it)
+  setTimeout(() => canvas.focus({preventScroll:true}), 0);
 });
+
 
 
 
@@ -290,7 +298,21 @@ class Game {
    this.height = BASE_H;   // logical game height
    this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
 
-    // player / world
+resize(w, h) {
+  this.width  = w;
+  this.height = h;
+  this.floorY = this.height - WORLD.FLOOR_HEIGHT - WORLD.BOTTOM_PAD;
+
+  // keep runner/floor aligned with new floor
+  this.trex = new Trex(this.ctx, this.floorY);
+  this.horizon = new Horizon(this.ctx, this.width, this.floorY);
+
+  // redraw idle if not playing
+  if (!this.isPlaying) this.renderIdleScreen();
+}
+
+     
+     // player / world
     this.trex = new Trex(this.ctx, this.floorY);
     this.horizon = new Horizon(this.ctx, this.width, this.floorY);
 
@@ -333,29 +355,26 @@ class Game {
   hideGameOver() { this.gameOverEl && this.gameOverEl.classList.add('hidden'); }
   showGameOver() { this.gameOverEl && this.gameOverEl.classList.remove('hidden'); }
 
-  bindEvents() {
-    document.addEventListener('keydown', e => {
-      if (e.code !== 'Space') return;
+bindEvents() {
+  document.addEventListener('keydown', e => {
+    if (e.code !== 'Space') return;
 
-      // First time -> start
-      if (!this.isPlaying && !this.hasEverStarted) {
-        this.start();
-        return;
-      }
-      // After game over -> ignore (must click restart)
-      if (!this.isPlaying && this.hasEverStarted) return;
+    e.preventDefault(); // <-- stops the parent page from scrolling
 
-      // While playing -> jump
-      this.trex.startJump();
-    });
+    if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
+    if (!this.isPlaying && this.hasEverStarted) return;
 
-    const mobileBtn = document.getElementById('mobile-btn');
-    mobileBtn?.addEventListener('click', () => {
-      if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
-      if (!this.isPlaying) return; // post-collision
-      this.trex.startJump();
-    });
-  }
+    this.trex.startJump();
+  });
+
+  const mobileBtn = document.getElementById('mobile-btn');
+  mobileBtn?.addEventListener('click', () => {
+    if (!this.isPlaying && !this.hasEverStarted) { this.start(); return; }
+    if (!this.isPlaying) return;
+    this.trex.startJump();
+  });
+}
+
 
   start() {
     this.isPlaying = true;
