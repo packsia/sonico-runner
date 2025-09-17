@@ -86,12 +86,16 @@ html, body {
   box-shadow: 0 2px 10px rgba(0,0,0,.15);
 }
 
-/* Show the mobile button only on touch devices */
-@media (hover: none) and (pointer: coarse) {
-  #mobile-btn { display: inline-block; }
+/* Touch devices: show and position under the floor */
+@media (hover:none) and (pointer:coarse){
+  #mobile-btn{
+    display:block;
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:14px;           /* sits under the floor line */
+    z-index:10;
+  }
+  #hud{ pointer-events:none; }   /* HUD doesn’t block touches */
+  #mobile-btn{ pointer-events:auto; }
 }
-
-
-/* keep this at the very end */
-.hidden { display: none !important; }
-
