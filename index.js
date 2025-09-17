@@ -191,8 +191,8 @@ class Bird {
     const H = (ctx.canvas.height / (window.devicePixelRatio || 1)); // logical height
 
     this.x = canvasWidth + Math.random() * 200;
-    const skyTop = 20;
-    const skyBottom = Math.min(H * 0.45, 220);  // keep birds with clouds, well above floor
+    const skyTop = 10;
+    const skyBottom = Math.max(60, this.ctx.canvas.height * 0.35); // same band as clouds
     this.y = skyTop + Math.random() * (skyBottom - skyTop);
 
     this.speed = 120 + Math.random() * 60;
