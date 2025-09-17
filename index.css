@@ -1,120 +1,96 @@
-/* Base reset */
-html, body { margin: 0; padding: 0; }
-*, *::before, *::after { box-sizing: border-box; }
-
-/* Center the stage on the page (optional) */
+/* Page & container fill the iframe */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
   display: grid;
-  overflow: hidden;
-  place-items: start center; /* top-center like your screenshot */
+  place-items: center;
   background: transparent;
+  overflow: hidden;
 }
 
-/* The stage is the same size as the canvas and is the HUD’s positioning context */
+/* The stage fills the whole iframe (no transform scaling anymore) */
 #stage {
   position: relative;
   width: 100%;
   height: 100%;
   display: grid;
-  line-height: 0; /* removes stray gaps */
+  line-height: 0;
 }
-#stage { transform-origin: top center; }
 
-canvas {
+/* Canvas always stretches to stage size; JS sets its internal pixel size */
+#game {
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
+  background: transparent;
+  outline: none;
 }
 
-/* Make sure the canvas itself doesn’t stretch */
-#game { display: block; background: transparent; }
-
-/* HUD fills the stage (not the whole page) */
+/* HUD covers the stage exactly */
 #hud {
   position: absolute;
   inset: 0;
   display: grid;
-  place-items: center;
-  pointer-events: none; /* clicks pass through except where we re-enable */
+  grid-template-rows: auto 1fr auto; /* top area / game space / bottom area */
+  pointer-events: none;
 }
 
-/* Start message */
+/* Start hint */
 #startMsg {
+  place-self: start center;
   font-family: system-ui, sans-serif;
   font-size: 18px;
   color: #7d1717;
-  background: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.75);
   padding: 8px 14px;
   border-radius: 6px;
 }
 
-/* Replace your current #runnerGif block with this */
-#runnerGif{
-  position:absolute;
-  left:0; top:0;            /* (0,0) is canvas top-left */
-  height: 100px;            /* match TrexConfig.HEIGHT */
-  width: auto;              /* keep aspect ratio */
-  pointer-events:none;
-  image-rendering:auto;     /* smoother */
+/* Runner GIF overlay (same as before) */
+#runnerGif {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100px;   /* match TrexConfig.HEIGHT */
+  width: auto;
+  pointer-events: none;
+  image-rendering: auto;
   transform: translate(0,0);
 }
 
-
 /* Game over stack */
-#gameOver {
-  display: grid;
-  gap: 20px;
-  justify-items: center;
-}
+#gameOver { display: grid; gap: 20px; justify-items: center; }
+#gameOverImg { max-width: 30%; height: auto; }
+#restartBtn { width: 45px; height: 45px; cursor: pointer; pointer-events: auto; }
 
-/* Keep images reasonable relative to canvas */
-#gameOverImg {
-  max-width: 30%;
-  height: auto;
-}
-
-#restartBtn {
-  width: 45px;  /* adjust if you like */
-  height: 45px;
-  cursor: pointer;
-  pointer-events: auto; /* clickable */
-}
-
-.hidden { display: none; }
+.hidden { display: none !important; }
 
 /* Mobile: hide the spacebar hint */
 @media (max-width: 768px) { #startMsg { display: none; } }
 
-/* Make the stage center in its iframe no matter what Squarespace does */
-#stage { margin: 0 auto; }
-
-/* Reset any right-aligned parent styles Squarespace might add */
-html, body { text-align: left; }
-
-/* Mobile button: hidden on desktop */
+/* Mobile Start/Jump button
+   It’s in the HUD’s **bottom row**, so it renders UNDER the floor line visually. */
 #mobile-btn {
-  display: none;
+  display: none;                  /* hidden on desktop */
+  justify-self: center;           /* centered horizontally */
+  align-self: start;              /* sits at top of the bottom row -> right under gameplay area */
+  margin-top: 14px;               /* little gap below the floor */
   pointer-events: auto;
+
   border: 0;
   border-radius: 12px;
   padding: 12px 18px;
   font: 600 16px/1.1 system-ui, sans-serif;
-  background: #7d1717;   /* red */
-  color: #fff;           /* white text */
+  background: #7d1717; color: #fff;
   box-shadow: 0 2px 10px rgba(0,0,0,.15);
 }
 
-/* Show the button ON MOBILE, centered UNDER the game */
+/* Show the mobile button only on touch devices */
 @media (hover: none) and (pointer: coarse) {
-  #mobile-btn {
-    display: block;          /* block makes margin auto work */
-    margin: 12px auto 0;     /* center it below the game */
-  }
+  #mobile-btn { display: inline-block; }
 }
+
 
 /* keep this at the very end */
 .hidden { display: none !important; }
