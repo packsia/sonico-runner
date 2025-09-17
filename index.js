@@ -81,7 +81,7 @@ const IMG = {
    Config
 ====================== */
 const WORLD = { FLOOR_HEIGHT: 10, BOTTOM_PAD: 10 };
-const WORLD_SPEED = 500;   // px/sec
+const WORLD_SPEED = 400;   // px/sec
 const GROUND_LIFT = -5;
 
 // Reserve this much *visual* space at the bottom for UI (button area)
