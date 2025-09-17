@@ -5,14 +5,13 @@
   <title>Sonico Runner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="index.css">
-
 </head>
 <body>
   <div id="stage">
     <canvas id="game" tabindex="0"></canvas>
     <img id="runnerGif" src="assets/sonico-images/sonicoman.gif" class="hidden" alt="">
 
-    <!-- HUD overlay (sits on top of the canvas only) -->
+    <!-- HUD overlay -->
     <div id="hud">
       <div id="startMsg">Press Space to Start</div>
 
@@ -20,13 +19,11 @@
         <img id="gameOverImg" src="assets/sonico-images/gameover.png" alt="Game Over" />
         <img id="restartBtn" src="assets/sonico-images/restart.png" alt="Restart" tabindex="0" />
       </div>
-     <button id="mobile-btn">Start</button>
+
+      <button id="mobile-btn" class="hidden">Start</button>
     </div>
   </div>
 
-
-
   <script src="index.js"></script>
 </body>
-
 </html>
